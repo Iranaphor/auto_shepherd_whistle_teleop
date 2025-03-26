@@ -1,4 +1,4 @@
-# ros2_python_template
+# auto_shepherd_whistle_teleop
 1. create repo from template
 2. git clone the new repo
 3. cd into the bash folder
