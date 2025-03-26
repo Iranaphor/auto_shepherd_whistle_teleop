@@ -1,0 +1,8 @@
+
+navigation_actions:
+  forward:
+    code: ['up', 'down']
+    twist: {x: 1, duration: 2}
+  backwards:
+    code: ['down', 'up']
+    twist: {x: -1, duration: 2}

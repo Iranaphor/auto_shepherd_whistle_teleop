@@ -22,6 +22,7 @@ setup(
     entry_points={
         'console_scripts': [
             'audio_filter.py = auto_shepherd_whistle_teleop.audio_filter:main',
+            'pitch_decoder.py = auto_shepherd_whistle_teleop.pitch_decoder:main',
         ],
     },
 )
