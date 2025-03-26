@@ -21,6 +21,7 @@ setup(
     license='TODO: License declaration',
     entry_points={
         'console_scripts': [
+            'audio_filter.py = auto_shepherd_whistle_teleop.audio_filter:main',
         ],
     },
 )

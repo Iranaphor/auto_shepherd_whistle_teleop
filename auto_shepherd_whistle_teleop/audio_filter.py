@@ -1,3 +1,7 @@
+import rclpy
+from rclpy.node import Node
+from rclpy.qos import QoSProfile, QoSHistoryPolicy, QoSReliabilityPolicy, QoSDurabilityPolicy
+import threading
 import time
 import numpy as np
 import sounddevice as sd
@@ -5,6 +9,7 @@ import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
 from scipy.signal import medfilt
 
+# RealTimeSpectrogram encapsulates the spectrogram functionality.
 class RealTimeSpectrogram:
     def __init__(self, sample_rate=44100, chunk_size=1024, window_duration=5,
                  threshold_db=-10, secondary_threshold_db=-5, medfilt_kernel=3):
@@ -25,7 +30,7 @@ class RealTimeSpectrogram:
         # Initialize spectrogram buffer (rows: time slices, columns: frequency bins)
         self.spectrogram = np.zeros((self.num_chunks, len(self.trimmed_freqs)))
 
-        # Event detection globals
+        # Event detection variables
         self.recording = False
         self.record_start_time = None
 
@@ -92,11 +97,9 @@ class RealTimeSpectrogram:
             self.record_start_time = current_time
             print("Start recording")
         elif self.recording and np.isnan(current_marker) and current_time - self.record_start_time > 1.5:
-            # Event finished after at least 1.5 seconds
+            # Event finished after at least 1.5 seconds.
             duration = current_time - self.record_start_time
-            # Determine relative time when event started (relative to window)
             event_start_rel = self.window_duration - duration
-            # Gather indices corresponding to event times
             event_indices = np.where((times >= event_start_rel) & (max_values > self.secondary_threshold_db))[0]
             recorded_points = list(zip(times[event_indices], filtered_max_freqs[event_indices]))
             print("\nEvent completed:")
@@ -106,24 +109,48 @@ class RealTimeSpectrogram:
             print("  Recorded points (timestamp, marker):")
             for t, m in recorded_points:
                 print("    ({:.3f}, {:.3f})".format(t, m))
-            # Reset event detection variables
             self.recording = False
             self.record_start_time = None
         elif self.recording:
-            # Continue recording
             print('.', end='', flush=True)
 
         return []
 
     def start(self):
-        # Open the audio stream and start the plot animation
+        # Open the audio stream and start the plot animation (blocking call)
         with sd.InputStream(channels=1, samplerate=self.sample_rate,
                             blocksize=self.chunk_size, callback=self.audio_callback):
             plt.tight_layout()
             plt.show()
 
-# Example usage:
+# ROS2 Node wrapping the RealTimeSpectrogram functionality.
+class RealTimeSpectrogramNode(Node):
+    def __init__(self):
+        super().__init__('real_time_spectrogram_node')
+        self.get_logger().info('Real Time Spectrogram Node initialized.')
+        # Instantiate the RealTimeSpectrogram object with desired parameters.
+        self.spectro = RealTimeSpectrogram(sample_rate=44100, chunk_size=1024, window_duration=5,
+                                           threshold_db=-10, secondary_threshold_db=-5, medfilt_kernel=3)
+
+    def get_qos(self):
+        """Returns a QoS profile for reliable, latched message delivery."""
+        return QoSProfile(
+            history=QoSHistoryPolicy.KEEP_LAST,
+            depth=10,
+            reliability=QoSReliabilityPolicy.BEST_EFFORT,
+            durability=QoSDurabilityPolicy.VOLATILE
+        )
+
+def main():
+    rclpy.init()
+    node = RealTimeSpectrogramNode()
+    # Start the ROS2 spin in a separate thread.
+    spin_thread = threading.Thread(target=rclpy.spin, args=(node,), daemon=True)
+    spin_thread.start()
+    # Run the spectrogram (with its matplotlib GUI) in the main thread.
+    node.spectro.start()
+    node.destroy_node()
+    rclpy.shutdown()
+
 if __name__ == '__main__':
-    spectro = RealTimeSpectrogram(sample_rate=44100, chunk_size=1024, window_duration=5,
-                                  threshold_db=-10, secondary_threshold_db=-5, medfilt_kernel=3)
-    spectro.start()
+    main()
