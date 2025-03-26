@@ -5,125 +5,125 @@ import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
 from scipy.signal import medfilt
 
-# Audio and spectrogram parameters
-sample_rate = 44100      # Audio sample rate (Hz)
-chunk_size = 1024        # Number of samples per audio chunk
-window_duration = 5      # Duration (in seconds) for the spectrogram display
-num_chunks = int(window_duration * sample_rate / chunk_size)  # Number of time slices
+class RealTimeSpectrogram:
+    def __init__(self, sample_rate=44100, chunk_size=1024, window_duration=5,
+                 threshold_db=-10, secondary_threshold_db=-5, medfilt_kernel=3):
+        # Audio and display parameters
+        self.sample_rate = sample_rate
+        self.chunk_size = chunk_size
+        self.window_duration = window_duration
+        self.num_chunks = int(window_duration * sample_rate / chunk_size)
+        self.threshold_db = threshold_db
+        self.secondary_threshold_db = secondary_threshold_db
+        self.medfilt_kernel = medfilt_kernel
 
-# Compute full FFT frequency bins for a given chunk size
-full_freqs = np.fft.rfftfreq(chunk_size, d=1/sample_rate)
-# Create a boolean mask to select frequencies between 500 and 5000 Hz
-freq_mask = (full_freqs >= 500) & (full_freqs <= 5000)
-# Trimmed frequency bins for the spectrogram and plotting
-trimmed_freqs = full_freqs[freq_mask]
+        # Compute full FFT frequency bins and create frequency mask (500-5000 Hz)
+        full_freqs = np.fft.rfftfreq(chunk_size, d=1/sample_rate)
+        self.freq_mask = (full_freqs >= 500) & (full_freqs <= 5000)
+        self.trimmed_freqs = full_freqs[self.freq_mask]
 
-# Initialize spectrogram with only the trimmed frequency bins
-spectrogram = np.zeros((num_chunks, len(trimmed_freqs)))
+        # Initialize spectrogram buffer (rows: time slices, columns: frequency bins)
+        self.spectrogram = np.zeros((self.num_chunks, len(self.trimmed_freqs)))
 
-# Set the dB threshold (all values below this will be zeroed)
-THRESHOLD_DB = -10
-# Secondary threshold for plotting the argmax marker
-SECONDARY_THRESHOLD_DB = -5
+        # Event detection globals
+        self.recording = False
+        self.record_start_time = None
 
-# Global variables for event detection
-recording = False
-record_start_time = None
+        # Setup plotting
+        self.fig, self.ax = plt.subplots(figsize=(10, 6))
+        self.ani = FuncAnimation(self.fig, self.update, interval=50, blit=False)
 
-def audio_callback(indata, frames, time_info, status):
-    global spectrogram
-    if status:
-        print(status)
-    # Use only the first channel (mono)
-    audio_data = indata[:, 0]
-    # Apply a Hanning window to reduce spectral leakage
-    windowed = audio_data * np.hanning(len(audio_data))
-    # Compute FFT and take the magnitude (only positive frequencies)
-    fft_data = np.abs(np.fft.rfft(windowed))
-    # Convert to dB scale (adding a small constant to avoid log(0))
-    fft_data = 20 * np.log10(fft_data + 1e-6)
-    # Apply binary thresholding: set values below THRESHOLD_DB to 0
-    fft_data = np.where(fft_data < THRESHOLD_DB, 0, fft_data)
-    # Trim the FFT data to keep only frequencies between 500 and 5000 Hz
-    fft_data_trimmed = fft_data[freq_mask]
-    
-    # Roll the spectrogram so that new data appears on the right
-    spectrogram[:-1, :] = spectrogram[1:, :]
-    spectrogram[-1, :] = fft_data_trimmed
+    def audio_callback(self, indata, frames, time_info, status):
+        if status:
+            print(status)
+        # Process mono audio
+        audio_data = indata[:, 0]
+        # Apply a Hanning window to reduce spectral leakage
+        windowed = audio_data * np.hanning(len(audio_data))
+        # Compute FFT magnitude for positive frequencies
+        fft_data = np.abs(np.fft.rfft(windowed))
+        # Convert to dB scale (avoid log(0))
+        fft_data = 20 * np.log10(fft_data + 1e-6)
+        # Binary thresholding: set values below threshold to 0
+        fft_data = np.where(fft_data < self.threshold_db, 0, fft_data)
+        # Trim the FFT data to keep only frequencies between 500 and 5000 Hz
+        fft_data_trimmed = fft_data[self.freq_mask]
+        # Roll the spectrogram buffer and append the new data
+        self.spectrogram[:-1, :] = self.spectrogram[1:, :]
+        self.spectrogram[-1, :] = fft_data_trimmed
 
-# Set up the figure and axis for the spectrogram
-fig, ax = plt.subplots(figsize=(10, 6))
+    def update(self, frame):
+        self.ax.clear()
+        # Define extent: [time_start, time_end, frequency_start, frequency_end]
+        extent = [0, self.window_duration, self.trimmed_freqs[0], self.trimmed_freqs[-1]]
+        self.ax.imshow(self.spectrogram.T, origin='lower', aspect='auto',
+                       extent=extent, cmap='viridis')
+        self.ax.set_xlabel("Time (s)")
+        self.ax.set_ylabel("Frequency (Hz)")
+        self.ax.set_title("Real-Time Spectrogram (500-5000 Hz) with Argmax")
 
-def update(frame):
-    global recording, record_start_time
-    ax.clear()
-    # Define extent: [time_start, time_end, frequency_start, frequency_end]
-    extent = [0, window_duration, trimmed_freqs[0], trimmed_freqs[-1]]
-    # Display the spectrogram; note the transpose to have time on x and frequency on y
-    ax.imshow(spectrogram.T, origin='lower', aspect='auto', extent=extent, cmap='viridis')
-    ax.set_xlabel("Time (s)")
-    ax.set_ylabel("Frequency (Hz)")
-    ax.set_title("Real-Time Spectrogram (500-5000 Hz) with Argmax")
-    
-    # Compute the time coordinates for each time slice (relative to the window)
-    times = np.linspace(0, window_duration, num_chunks)
-    # For each time slice, compute the maximum amplitude and its corresponding frequency bin
-    max_values = np.max(spectrogram, axis=1)
-    max_indices = np.argmax(spectrogram, axis=1)
-    # Convert bin indices to actual frequencies using the trimmed frequency array
-    max_freqs = trimmed_freqs[max_indices]
-    
-    # Apply a median filter with a kernel width of 3 to smooth the frequency markers
-    filtered_max_freqs = medfilt(max_freqs, kernel_size=3)
-    # Replace any marker equal to the minimum of the filtered values with NaN
-    filtered_max_freqs = np.where(filtered_max_freqs == np.min(filtered_max_freqs),
-                                  np.nan, filtered_max_freqs)
-    
-    # Plot markers for each time slice where the maximum amplitude exceeds the secondary threshold
-    valid = max_values > SECONDARY_THRESHOLD_DB
-    if np.any(valid):
-        ax.plot(times[valid], filtered_max_freqs[valid], marker='o', linestyle='-', color='red', markersize=5)
-    
-    # --- Event Detection ---
-    # Use the most recent marker (rightmost time slice) as the current point.
-    current_marker = filtered_max_freqs[-1]
-    current_time = time.time()  # absolute current time in seconds
+        # Compute time axis for each time slice
+        times = np.linspace(0, self.window_duration, self.num_chunks)
+        # For each time slice, compute maximum amplitude and its frequency bin
+        max_values = np.max(self.spectrogram, axis=1)
+        max_indices = np.argmax(self.spectrogram, axis=1)
+        max_freqs = self.trimmed_freqs[max_indices]
 
-    if not recording and not np.isnan(current_marker):
-        # Detected the start of a new event
-        recording = True
-        record_start_time = current_time
-        print("Start recording")
-    elif recording and np.isnan(current_marker) and current_time - record_start_time > 1.5:
-        # The event has ended after at least 1.5 seconds.
-        duration = current_time - record_start_time
-        # Determine the relative time at which the event started in the spectrogram.
-        # (Assuming the event started duration seconds ago, relative to the right edge.)
-        event_start_rel = window_duration - duration
-        # Select indices corresponding to times after the event started and that are valid.
-        event_indices = np.where((times >= event_start_rel) & (max_values > SECONDARY_THRESHOLD_DB))[0]
-        # Assemble the recorded points from the filtered markers
-        recorded_points = list(zip(times[event_indices], filtered_max_freqs[event_indices]))
-        print("\nEvent completed:")
-        print("  Start time: {:.3f} sec".format(record_start_time))
-        print("  Stop time:  {:.3f} sec".format(current_time))
-        print("  Duration:   {:.3f} sec".format(duration))
-        print("  Recorded points (timestamp, marker):")
-        for t, m in recorded_points:
-            print("    ({:.3f}, {:.3f})".format(t, m))
-        # Reset event detection variables
-        recording = False
-        record_start_time = None
-    elif recording:
-        # Continue recording the event (no manual point appending).
-        print('.', end='', flush=True)
+        # Apply median filter to smooth frequency markers
+        filtered_max_freqs = medfilt(max_freqs, kernel_size=self.medfilt_kernel)
+        # Replace markers equal to the minimum value with NaN
+        filtered_max_freqs = np.where(filtered_max_freqs == np.min(filtered_max_freqs),
+                                      np.nan, filtered_max_freqs)
 
-    return []
+        # Plot valid markers (time slices where max amplitude exceeds secondary threshold)
+        valid = max_values > self.secondary_threshold_db
+        if np.any(valid):
+            self.ax.plot(times[valid], filtered_max_freqs[valid], marker='o', 
+                         linestyle='-', color='red', markersize=5)
 
-# Create an animation that updates the spectrogram plot
-ani = FuncAnimation(fig, update, interval=50, blit=False)
+        # --- Event Detection ---
+        # Use the most recent marker (rightmost time slice) as the current point.
+        current_marker = filtered_max_freqs[-1]
+        current_time = time.time()  # absolute current time in seconds
 
-# Open the input stream and start the real-time update loop
-with sd.InputStream(channels=1, samplerate=sample_rate, blocksize=chunk_size, callback=audio_callback):
-    plt.tight_layout()
-    plt.show()
+        if not self.recording and not np.isnan(current_marker):
+            # Detected the start of a new event
+            self.recording = True
+            self.record_start_time = current_time
+            print("Start recording")
+        elif self.recording and np.isnan(current_marker) and current_time - self.record_start_time > 1.5:
+            # Event finished after at least 1.5 seconds
+            duration = current_time - self.record_start_time
+            # Determine relative time when event started (relative to window)
+            event_start_rel = self.window_duration - duration
+            # Gather indices corresponding to event times
+            event_indices = np.where((times >= event_start_rel) & (max_values > self.secondary_threshold_db))[0]
+            recorded_points = list(zip(times[event_indices], filtered_max_freqs[event_indices]))
+            print("\nEvent completed:")
+            print("  Start time: {:.3f} sec".format(self.record_start_time))
+            print("  Stop time:  {:.3f} sec".format(current_time))
+            print("  Duration:   {:.3f} sec".format(duration))
+            print("  Recorded points (timestamp, marker):")
+            for t, m in recorded_points:
+                print("    ({:.3f}, {:.3f})".format(t, m))
+            # Reset event detection variables
+            self.recording = False
+            self.record_start_time = None
+        elif self.recording:
+            # Continue recording
+            print('.', end='', flush=True)
+
+        return []
+
+    def start(self):
+        # Open the audio stream and start the plot animation
+        with sd.InputStream(channels=1, samplerate=self.sample_rate,
+                            blocksize=self.chunk_size, callback=self.audio_callback):
+            plt.tight_layout()
+            plt.show()
+
+# Example usage:
+if __name__ == '__main__':
+    spectro = RealTimeSpectrogram(sample_rate=44100, chunk_size=1024, window_duration=5,
+                                  threshold_db=-10, secondary_threshold_db=-5, medfilt_kernel=3)
+    spectro.start()
