@@ -1,126 +1,159 @@
+import os
+import yaml
+import cv2
+import numpy as np
+
 import rclpy
 from rclpy.node import Node
 from sensor_msgs.msg import Image
-import cv2
 from cv_bridge import CvBridge
-import numpy as np
-import os
-import glob
 from ament_index_python.packages import get_package_share_directory
 
-
 class ImageTemplateMatcher(Node):
-    def __init__(self, template_dir):
+    def __init__(self, config_file, package_name='auto_shepherd_whistle_teleop'):
         super().__init__('image_template_matcher')
-        self.template_dir = template_dir
         self.bridge = CvBridge()
-        self.template_images = self.load_templates(template_dir)
-
-        # Subscribe to the /pitch_img topic
+        self.package_name = package_name
+        self.config = self.load_config(config_file)
+        self.template_infos = self.config.get('templates', [])
+        self.templates = self.load_templates(self.template_infos)
+        
+        # Subscriber for incoming images on /pitch_img
         self.subscription = self.create_subscription(
             Image,
-            'pitch_image',
+            '/pitch_image',
             self.image_callback,
-            10  # QoS depth
+            10
         )
-        self.publisher = self.create_subscription(
-            Image,
-            'labelled_pitch_image',
-            10  # QoS depth
-        )
+        # Publisher for annotated images on labelled_pitch_image
+        self.image_pub = self.create_publisher(Image, 'labelled_pitch_image', 10)
+        
         self.get_logger().info('Image Template Matcher Node initialized.')
 
-    def load_templates(self, template_dir):
+    def load_config(self, config_file):
         """
-        Loads all template images from the specified directory.
-        The method searches for .png, .jpg, and .jpeg files.
+        Loads the YAML configuration.
+        If the path is relative, it will be taken from the package share directory.
+        """
+        if not os.path.isabs(config_file):
+            config_file = os.path.join(get_package_share_directory(self.package_name), config_file)
+        self.get_logger().info(f'Loading configuration from {config_file}')
+        with open(config_file, 'r') as f:
+            config = yaml.safe_load(f)
+        return config
+
+    def load_templates(self, template_infos):
+        """
+        Loads each template image as specified in the configuration.
+        Each template entry includes:
+          - filename: path to the image (absolute or relative to the package share directory)
+          - sensitivity: matching threshold (a value between 0 and 1)
+          - bounding_box_colour: BGR colour list for drawing bounding boxes
+          - action: an identifier for what to do when the template is matched
         """
         templates = []
-        image_extensions = ['*.png', '*.jpg', '*.jpeg']
-        for ext in image_extensions:
-            for file in glob.glob(os.path.join(template_dir, ext)):
-                # Read image in grayscale for template matching
-                template = cv2.imread(file, cv2.IMREAD_GRAYSCALE)
-                if template is not None:
-                    templates.append((file, template))
-                    self.get_logger().info(f'Loaded template: {file}')
-                else:
-                    self.get_logger().warn(f'Failed to load template: {file}')
+        for info in template_infos:
+            filename = info.get('filename')
+            sensitivity = info.get('sensitivity', 0.8)  # default threshold if not provided
+            bounding_box_colour = info.get('bounding_box_colour', [0, 255, 0])
+            action = info.get('action', None)
+            
+            # Determine full path: if filename starts with '/', it's an absolute path.
+            if os.path.isabs(filename):
+                full_path = filename
+            else:
+                full_path = os.path.join(get_package_share_directory(self.package_name), filename)
+            
+            # Load the template in grayscale
+            template_image = cv2.imread(full_path, cv2.IMREAD_GRAYSCALE)
+            if template_image is not None:
+                templates.append({
+                    'file': full_path,
+                    'image': template_image,
+                    'sensitivity': sensitivity,
+                    'bounding_box_colour': bounding_box_colour,
+                    'action': action
+                })
+                self.get_logger().info(f'Loaded template {filename} with action "{action}"')
+            else:
+                self.get_logger().warn(f'Failed to load template {full_path}')
         return templates
 
     def image_callback(self, msg):
         """
-        Processes images from /pitch_img, converting the image to grayscale,
-        and performing multi-scale template matching against each loaded template.
+        Processes images from /pitch_img. The node converts the ROS image to an OpenCV image,
+        runs multi-scale template matching for each template, draws bounding boxes for each match
+        on a single image, and publishes the annotated image to labelled_pitch_image.
         """
-        print('image callback')
+        print('img callback')
         try:
-            # Convert the ROS Image message to an OpenCV BGR image then to greyscale
+            # Convert the ROS Image message to an OpenCV BGR image
             cv_image = self.bridge.imgmsg_to_cv2(msg, desired_encoding='bgr8')
+            # Convert to grayscale for matching
             gray_image = cv2.cvtColor(cv_image, cv2.COLOR_BGR2GRAY)
-
-            # Loop over each template
-            for file, template in self.template_images:
+            
+            # For each template, perform multi-scale matching and draw bounding boxes if matched
+            for tmpl in self.templates:
+                template = tmpl['image']
+                sensitivity = tmpl['sensitivity']
+                bounding_box_colour = tmpl['bounding_box_colour']
+                action = tmpl['action']
+                
                 best_val = -np.inf
                 best_scale = None
                 best_loc = None
                 best_resized_template = None
 
-                # Try a range of scales (for example, from 0.5 to 1.5 times the original size)
+                # Try matching over a range of scales (e.g., 0.5 to 1.5 times the template size)
                 for scale in np.linspace(0.5, 1.5, 10):
-                    # Resize the template according to the current scale
                     resized_template = cv2.resize(template, None, fx=scale, fy=scale, interpolation=cv2.INTER_AREA)
-                    # Skip if the resized template is larger than the image
+                    # Skip if the template is larger than the image
                     if resized_template.shape[0] > gray_image.shape[0] or resized_template.shape[1] > gray_image.shape[1]:
                         continue
-                    #print(file.split('/')[-1], round(scale,2))
-
-                    # Perform template matching
                     result = cv2.matchTemplate(gray_image, resized_template, cv2.TM_CCOEFF_NORMED)
                     min_val, max_val, min_loc, max_loc = cv2.minMaxLoc(result)
-
-                    # Check if this scale gives a better match
                     if max_val > best_val:
                         best_val = max_val
                         best_loc = max_loc
                         best_scale = scale
                         best_resized_template = resized_template
 
-                threshold = 0.1  # Adjust threshold as needed
-                filename = file.split('/')[-1]
-                if best_val >= threshold:
-                    self.get_logger().info(f'Match found for {filename} at scale {best_scale:.2f} with score {best_val:.2f}')
-                    # (Optional) Visualization: draw rectangle on the match location
+                # If the best match exceeds the sensitivity threshold, draw the bounding box and log the action
+                if best_val >= sensitivity:
+                    self.get_logger().info(
+                        f'Match for {tmpl["file"]} with action "{action}" at scale {best_scale:.2f} (score: {best_val:.2f})'
+                    )
                     w, h = best_resized_template.shape[::-1]
-                    cv2.rectangle(cv_image, best_loc, (best_loc[0] + w, best_loc[1] + h), (0, 255, 0), 2)
-                    cv2.imshow("Matched", cv_image)
-                    cv2.waitKey(1)
+                    cv2.rectangle(cv_image, best_loc, (best_loc[0] + w, best_loc[1] + h), bounding_box_colour, 2)
+                    text_position = (best_loc[0], best_loc[1] - 10 if best_loc[1] - 10 > 10 else best_loc[1] + 10)
+                    cv2.putText(cv_image, action, text_position, cv2.FONT_HERSHEY_SIMPLEX,
+                                0.5, bounding_box_colour, 2, cv2.LINE_AA)
                 else:
-                    self.get_logger().debug(f'No match found for {filename} (best score: {best_val:.2f})')
-
-            # Convert to ROS2 Image and publish
-            ros_image = self.bridge.cv2_to_imgmsg(cv_image, encoding="rgb8")
-            self.image_pub.publish(ros_image)
-
+                    self.get_logger().debug(f'No match for {tmpl["file"]} (best score: {best_val:.2f})')
+            
+            # Publish the annotated image to the labelled_pitch_image topic
+            annotated_msg = self.bridge.cv2_to_imgmsg(cv_image, encoding='bgr8')
+            self.image_pub.publish(annotated_msg)
+            
+            # (Optional) Display the annotated image locally for debugging
+            #cv2.imshow("Matched", cv_image)
+            #cv2.waitKey(1)
+            
         except Exception as e:
             self.get_logger().error(f'Error processing image: {str(e)}')
 
-
 def main(args=None):
     rclpy.init(args=args)
-    # Specify the directory containing the template images.
-    # Change '/path/to/template_directory' to your actual path.
-    template_dir = os.path.join(
-        get_package_share_directory('auto_shepherd_whistle_teleop'),
-        'templates'
-    )
-    node = ImageTemplateMatcher(template_dir)
-
+    # Specify the config file relative to the package share directory,
+    # or provide an absolute path if desired.
+    config_file = 'config/template_matching_config.yaml'  # update to your config file location
+    node = ImageTemplateMatcher(config_file)
+    
     try:
         rclpy.spin(node)
     except KeyboardInterrupt:
         pass
-
+    
     node.destroy_node()
     rclpy.shutdown()
 

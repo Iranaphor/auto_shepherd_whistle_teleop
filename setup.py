@@ -12,6 +12,7 @@ setup(
     data_files=[
         ('share/ament_index/resource_index/packages', [f'resource/{pkg}']),
         (f"share/{package_name}/config", glob(os.path.join('config', '*.rviz'))),
+        (f"share/{package_name}/config", glob(os.path.join('config', '*.yaml'))),
         (f"share/{package_name}/templates", glob(os.path.join('templates', '*.png'))),
         (f'share/{pkg}', ['package.xml']),
     ],
