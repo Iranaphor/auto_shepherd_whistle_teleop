@@ -1,0 +1,25 @@
+---
+session: auto_shepherd_whistle_teleop
+init_cmd: |
+  #exec /bin/bash
+  cd @TMULE_CONFIG_DIR@ || true
+  set -o pipefail
+
+  # Source system configuration
+  source ~/.bashrc
+  export DISPLAY=:0
+
+  # Define Demo RViZ File
+  PKG=$(ros2 pkg prefix auto_shepherd_whistle_teleop)
+  RVIZ_CONFIG=$PKG/share/auto_shepherd_whistle_teleop/config/image_viewer.rviz
+
+  # Source the environment variables for the scenario
+  clear -x
+
+windows:
+- name: auto_shepherd_whistle_teleop
+  panes:
+  - rviz2 -d $RVIZ_CONFIG
+  - ros2 run auto_shepherd_whistle_teleop audio_filter.py
+  - ros2 run auto_shepherd_whistle_teleop template_matcher.py
+  - ros2 run auto_shepherd_whistle_teleop pitch_decoder.py

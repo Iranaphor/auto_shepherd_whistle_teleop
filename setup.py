@@ -11,6 +11,7 @@ setup(
     packages=[package_name],
     data_files=[
         ('share/ament_index/resource_index/packages', [f'resource/{pkg}']),
+        (f"share/{package_name}/config", glob(os.path.join('config', '*.rviz'))),
         (f'share/{pkg}', ['package.xml']),
     ],
     install_requires=['setuptools'],
@@ -23,6 +24,7 @@ setup(
         'console_scripts': [
             'audio_filter.py = auto_shepherd_whistle_teleop.audio_filter:main',
             'pitch_decoder.py = auto_shepherd_whistle_teleop.pitch_decoder:main',
+            'template_matcher.py = auto_shepherd_whistle_teleop.template_matcher:main',
         ],
     },
 )

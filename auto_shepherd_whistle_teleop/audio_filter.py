@@ -5,6 +5,7 @@ import threading
 import time
 import numpy as np
 import sounddevice as sd
+from cv_bridge import CvBridge
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
 from scipy.signal import medfilt
@@ -12,10 +13,11 @@ from scipy.signal import medfilt
 # Import message types
 from auto_shepherd_msgs.msg import PitchTrack, SpectralPeak
 from std_msgs.msg import Header, Float32
+from sensor_msgs.msg import Image
 from builtin_interfaces.msg import Time as RosTime
 
 class RealTimeSpectrogram:
-    def __init__(self, node, pitch_pub,
+    def __init__(self, node, pitch_pub, image_pub, image_stream,
                  sample_rate=44100, chunk_size=1024, window_duration=5,
                  threshold_db=-10, secondary_threshold_db=-5, medfilt_kernel=3,
                  show_display=True):
@@ -26,7 +28,10 @@ class RealTimeSpectrogram:
         """
         self.node = node
         self.pitch_pub = pitch_pub
+        self.image_pub = image_pub
+        self.image_stream = image_stream
         self.show_display = show_display
+        self.bridge = CvBridge()
 
         # Audio and display parameters
         self.sample_rate = sample_rate
@@ -88,8 +93,22 @@ class RealTimeSpectrogram:
             self.ax.set_title("Real-Time Spectrogram (500-5000 Hz) with Argmax")
             valid = max_values > self.secondary_threshold_db
             if np.any(valid):
-                self.ax.plot(times[valid], filtered_max_freqs[valid], marker='o', 
+                self.ax.plot(times[valid], filtered_max_freqs[valid], marker='o',
                              linestyle='-', color='red', markersize=5)
+
+        # Format datastream
+        viridis = plt.get_cmap('viridis')
+        min_val = np.min(self.spectrogram)
+        max_val = np.max(self.spectrogram)
+
+        # Perform min-max normalization
+        normalized_spectrogram = (np.flipud(self.spectrogram.T) - min_val) / (max_val - min_val)
+        colored_spectrogram = viridis(normalized_spectrogram)[:, :, :3]  # Exclude the alpha channel
+        colored_spectrogram = (colored_spectrogram * 255).astype(np.uint8)
+
+        # Convert to ROS2 Image and publish
+        ros_image = self.bridge.cv2_to_imgmsg(colored_spectrogram, encoding="rgb8")
+        self.image_stream.publish(ros_image)
 
         # --- Event Detection & PitchTrack Publishing ---
         current_marker = filtered_max_freqs[-1]
@@ -111,7 +130,7 @@ class RealTimeSpectrogram:
             self.node.get_logger().info("  Recorded points (timestamp, marker):")
             for t, m in recorded_points:
                 self.node.get_logger().info("    ({:.3f}, {:.3f})".format(t, m))
-            
+
             # --- Build and Publish the PitchTrack message ---
             pt = PitchTrack()
             now = self.node.get_clock().now().to_msg()
@@ -124,7 +143,7 @@ class RealTimeSpectrogram:
             duration_time.sec = int(duration)
             duration_time.nanosec = int((duration - int(duration)) * 1e9)
             pt.duration = duration_time
-            
+
             pt.peak_frequency_contour = []
             for t_rel, freq in recorded_points:
                 sp = SpectralPeak()
@@ -135,10 +154,24 @@ class RealTimeSpectrogram:
                 sp.stamp = pt_time  # Assign directly as a Time sub-message
                 sp.peak_frequency = Float32(data=freq)
                 pt.peak_frequency_contour.append(sp)
-            
+
             self.pitch_pub.publish(pt)
             self.node.get_logger().info("Published PitchTrack with {} points.".format(len(pt.peak_frequency_contour)))
-            
+
+            # Format datastream
+            viridis = plt.get_cmap('viridis')
+            min_val = np.min(self.spectrogram)
+            max_val = np.max(self.spectrogram)
+
+            # Perform min-max normalization
+            normalized_spectrogram = (np.flipud(self.spectrogram.T) - min_val) / (max_val - min_val)
+            colored_spectrogram = viridis(normalized_spectrogram)[:, :, :3]  # Exclude the alpha channel
+            colored_spectrogram = (colored_spectrogram * 255).astype(np.uint8)
+
+            # Convert to ROS2 Image and publish
+            ros_image = self.bridge.cv2_to_imgmsg(colored_spectrogram, encoding="rgb8")
+            self.image_pub.publish(ros_image)
+
             self.recording = False
             self.record_start_time = None
         elif self.recording:
@@ -171,11 +204,22 @@ class RealTimeSpectrogramNode(Node):
             'pitch_track',
             self.get_qos()
         )
+        self.image_pub = self.create_publisher(
+            Image,
+            'pitch_image',
+            self.get_qos()
+        )
+        self.image_stream = self.create_publisher(
+            Image,
+            'audio_stream',
+            self.get_qos()
+        )
         # Pass show_display argument here (set to False to disable GUI)
         self.spectro = RealTimeSpectrogram(node=self, pitch_pub=self.pitch_pub,
+                                           image_pub=self.image_pub, image_stream=self.image_stream,
                                            sample_rate=44100, chunk_size=1024, window_duration=5,
                                            threshold_db=-10, secondary_threshold_db=-5,
-                                           medfilt_kernel=3, show_display=True)
+                                           medfilt_kernel=3, show_display=False)
 
     def get_qos(self):
         return QoSProfile(
