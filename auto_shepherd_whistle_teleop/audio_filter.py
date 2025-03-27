@@ -207,12 +207,12 @@ class RealTimeSpectrogramNode(Node):
         self.image_pub = self.create_publisher(
             Image,
             'pitch_image',
-            self.get_qos()
+            self.get_image_qos()
         )
         self.image_stream = self.create_publisher(
             Image,
             'audio_stream',
-            self.get_qos()
+            self.get_image_qos()
         )
         # Pass show_display argument here (set to False to disable GUI)
         self.spectro = RealTimeSpectrogram(node=self, pitch_pub=self.pitch_pub,
@@ -226,6 +226,14 @@ class RealTimeSpectrogramNode(Node):
             history=QoSHistoryPolicy.KEEP_LAST,
             depth=10,
             reliability=QoSReliabilityPolicy.BEST_EFFORT,
+            durability=QoSDurabilityPolicy.VOLATILE
+        )
+
+    def get_image_qos(self):
+        return QoSProfile(
+            history=QoSHistoryPolicy.KEEP_LAST,
+            depth=10,
+            reliability=QoSReliabilityPolicy.RELIABLE,
             durability=QoSDurabilityPolicy.VOLATILE
         )
 
