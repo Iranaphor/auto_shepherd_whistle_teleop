@@ -1,25 +1,25 @@
 templates:
-  - filename: "templates/a.png"
-    sensitivity: 0.20
+  - filename: "templates/stop.png"
+    sensitivity: 0.15
     bounding_box_colour: [0,0,255]
     action: 'stop'
 
-  - filename: "templates/b.png"
-    sensitivity: 0.20
+  - filename: "templates/forward.png"
+    sensitivity: 0.30
     bounding_box_colour: [0,255,255]
     action: 'forward'
 
-  - filename: "templates/c.png"
-    sensitivity: 0.20
+  - filename: "templates/backward.png"
+    sensitivity: 0.30
     bounding_box_colour: [0,255,0]
     action: 'backward'
 
-  - filename: "templates/d.png"
-    sensitivity: 0.20
+  - filename: "templates/left.png"
+    sensitivity: 0.30
     bounding_box_colour: [255,0,255]
     action: 'left'
 
-  - filename: "templates/e.png"
-    sensitivity: 0.20
+  - filename: "templates/right.png"
+    sensitivity: 0.30
     bounding_box_colour: [255,255,0]
     action: 'right'

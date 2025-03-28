@@ -19,8 +19,8 @@ init_cmd: |
 windows:
 - name: auto_shepherd_whistle_teleop
   panes:
-  #- rviz2 -d $RVIZ_CONFIG
-  - ros2 run image_view image_view --ros-args --remap image:=/audio_stream
+  - rviz2 -d $RVIZ_CONFIG
+  #- ros2 run image_view image_view --ros-args --remap image:=/audio_stream
   - ros2 run auto_shepherd_whistle_teleop audio_filter.py
   - ros2 run auto_shepherd_whistle_teleop template_matcher.py
   - ros2 run auto_shepherd_whistle_teleop pitch_decoder.py

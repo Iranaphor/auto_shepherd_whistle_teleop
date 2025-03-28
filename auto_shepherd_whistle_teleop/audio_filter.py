@@ -98,8 +98,8 @@ class RealTimeSpectrogram:
 
         # Format datastream
         viridis = plt.get_cmap('viridis')
-        min_val = np.min(self.spectrogram)
-        max_val = np.max(self.spectrogram)
+        min_val = -10.0
+        max_val =  55.0
 
         # Perform min-max normalization
         normalized_spectrogram = (np.flipud(self.spectrogram.T) - min_val) / (max_val - min_val)
@@ -160,12 +160,12 @@ class RealTimeSpectrogram:
 
             # Format datastream
             viridis = plt.get_cmap('viridis')
-            min_val = np.min(self.spectrogram)
-            max_val = np.max(self.spectrogram)
+            min_val = -10.0
+            max_val =  55.0
 
             # Perform min-max normalization
             normalized_spectrogram = (np.flipud(self.spectrogram.T) - min_val) / (max_val - min_val)
-            colored_spectrogram = viridis(normalized_spectrogram)[:, :, :3]  # Exclude the alpha channel
+            colored_spectrogram = viridis(normalized_spectrogram)[:, :, :3]
             colored_spectrogram = (colored_spectrogram * 255).astype(np.uint8)
 
             # Convert to ROS2 Image and publish

@@ -91,7 +91,8 @@ class ImageTemplateMatcher(Node):
             cv_image = self.bridge.imgmsg_to_cv2(msg, desired_encoding='bgr8')
             # Convert to grayscale for matching
             gray_image = cv2.cvtColor(cv_image, cv2.COLOR_BGR2GRAY)
-            
+            gray_image = cv2.medianBlur(gray_image, 5)
+
             # For each template, perform multi-scale matching and draw bounding boxes if matched
             for tmpl in self.templates:
                 template = tmpl['image']
@@ -121,16 +122,17 @@ class ImageTemplateMatcher(Node):
                 # If the best match exceeds the sensitivity threshold, draw the bounding box and log the action
                 if best_val >= sensitivity:
                     self.get_logger().info(
-                        f'Match for {tmpl["file"]} with action "{action}" at scale {best_scale:.2f} (score: {best_val:.2f})'
+                        f'Match for action "{action}" at scale {best_scale:.2f} (score: {best_val:.2f})'
                     )
                     w, h = best_resized_template.shape[::-1]
                     cv2.rectangle(cv_image, best_loc, (best_loc[0] + w, best_loc[1] + h), bounding_box_colour, 2)
                     text_position = (best_loc[0], best_loc[1] - 10 if best_loc[1] - 10 > 10 else best_loc[1] + 10)
-                    cv2.putText(cv_image, action, text_position, cv2.FONT_HERSHEY_SIMPLEX,
-                                0.5, bounding_box_colour, 2, cv2.LINE_AA)
+                    cv2.putText(cv_image, f"{action} {round(best_val,2)}", text_position,
+                                cv2.FONT_HERSHEY_SIMPLEX, 0.4, bounding_box_colour,
+                                1) #, cv2.LINE_AA)
                 else:
                     self.get_logger().debug(f'No match for {tmpl["file"]} (best score: {best_val:.2f})')
-            
+
             # Publish the annotated image to the labelled_pitch_image topic
             annotated_msg = self.bridge.cv2_to_imgmsg(cv_image, encoding='bgr8')
             self.image_pub.publish(annotated_msg)
