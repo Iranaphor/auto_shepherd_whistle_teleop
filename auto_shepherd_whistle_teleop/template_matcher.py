@@ -2,6 +2,7 @@ import os
 import yaml
 import cv2
 import numpy as np
+import matplotlib.pyplot as plt
 from cv_bridge import CvBridge
 from ament_index_python.packages import get_package_share_directory
 
@@ -96,12 +97,14 @@ class ImageTemplateMatcher(Node):
         """
         try:
             # Convert the ROS Image message to an OpenCV BGR image
-            cv_image_raw = self.bridge.imgmsg_to_cv2(msg, desired_encoding='mono8')
+            cv_image = self.bridge.imgmsg_to_cv2(msg, desired_encoding='mono8')
+            cv_image_raw = cv2.cvtColor(cv_image, cv2.COLOR_GRAY2RGB)
 
             # Format rgb datastream
             viridis = plt.get_cmap('viridis')
-            cv_image_rgb = viridis(cv_image_raw)[:, :, :3]
+            cv_image_rgb = viridis(cv_image)[:, :, :3]
             cv_image_rgb = (cv_image_rgb * 255).astype(np.uint8)
+            cv_image_rgb = cv2.cvtColor(cv_image_rgb, cv2.COLOR_RGB2BGR)
 
             # Convert to grayscale for matching
             # gray_image = cv2.medianBlur(gray_image, 5)
@@ -119,22 +122,24 @@ class ImageTemplateMatcher(Node):
                 best_resized_template = None
 
                 # Try matching over a range of scales (e.g., 0.5 to 1.5 times the template size)
-                for scale in np.linspace(0.5, 1.5, 10):
-                    resized_template = cv2.resize(template, None, fx=scale, fy=scale, interpolation=cv2.INTER_AREA)
-                    # Skip if the template is larger than the image
-                    if resized_template.shape[0] > cv_image_raw.shape[0] or resized_template.shape[1] > cv_image_raw.shape[1]:
-                        continue
-                    result = cv2.matchTemplate(cv_image_raw, resized_template, cv2.TM_CCOEFF_NORMED)
-                    min_val, max_val, min_loc, max_loc = cv2.minMaxLoc(result)
-                    if max_val > best_val:
-                        best_val = max_val
-                        best_loc = max_loc
-                        best_scale = scale
-                        best_resized_template = resized_template
+                for scale_x in np.linspace(0.5, 1.5, 10):
+                    for scale_y in np.linspace(0.5, 1.5, 10):
+                        resized_template = cv2.resize(template, None, fx=scale_x, fy=scale_y, interpolation=cv2.INTER_AREA)
+                        # Skip if the template is larger than the image
+                        if resized_template.shape[0] > cv_image_raw.shape[0] or resized_template.shape[1] > cv_image_raw.shape[1]:
+                            continue
+                        result = cv2.matchTemplate(cv_image, resized_template, cv2.TM_CCOEFF_NORMED)
+                        min_val, max_val, min_loc, max_loc = cv2.minMaxLoc(result)
+                        if max_val > best_val:
+                            best_val = max_val
+                            best_loc = max_loc
+                            best_scale_x = scale_x
+                            best_scale_y = scale_y
+                            best_resized_template = resized_template
 
                 # If the best match exceeds the sensitivity threshold, draw the bounding box and log the action
                 if best_val >= sensitivity:
-                    bs = f'{best_scale:.2f}'
+                    bs = f'{best_scale_x:.2f}x{best_scale_y:.2f}'
                     bv = f'{best_val:.2f})'
                     self.get_logger().info(f'Match at scale {bs} (score: {bv} for action "{action}"')
                     w, h = best_resized_template.shape[::-1]
