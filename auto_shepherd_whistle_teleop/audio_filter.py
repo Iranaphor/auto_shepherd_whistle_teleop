@@ -1,3 +1,5 @@
+import os
+import yaml
 import rclpy
 from rclpy.node import Node
 from rclpy.qos import QoSProfile, QoSHistoryPolicy, QoSReliabilityPolicy, QoSDurabilityPolicy
@@ -17,10 +19,7 @@ from sensor_msgs.msg import Image
 from builtin_interfaces.msg import Time as RosTime
 
 class RealTimeSpectrogram:
-    def __init__(self, node, pitch_pub, image_pub, image_stream,
-                 sample_rate=44100, chunk_size=1024, window_duration=5,
-                 threshold_db=-10, secondary_threshold_db=-5, medfilt_kernel=3,
-                 show_display=True):
+    def __init__(self, node, pitch_pub, image_pub, image_stream, config):
         """
         node: A ROS2 Node instance for logging and clock.
         pitch_pub: A ROS2 publisher for PitchTrack messages.
@@ -30,21 +29,38 @@ class RealTimeSpectrogram:
         self.pitch_pub = pitch_pub
         self.image_pub = image_pub
         self.image_stream = image_stream
-        self.show_display = show_display
         self.bridge = CvBridge()
 
         # Audio and display parameters
-        self.sample_rate = sample_rate
-        self.chunk_size = chunk_size
-        self.window_duration = window_duration
-        self.num_chunks = int(window_duration * sample_rate / chunk_size)
-        self.threshold_db = threshold_db
-        self.secondary_threshold_db = secondary_threshold_db
-        self.medfilt_kernel = medfilt_kernel
+        self.config = config
+        i = self.config['audio_filter']['input_stream']
+        p = self.config['audio_filter']['preprocessing']
+        a = self.config['audio_filter']['activity_detection']
+
+        # Save input stream properties
+        self.sample_rate = i['sample_rate']
+        self.chunk_size = i['chunk_size']
+        self.window_duration = i['window_duration']
+        self.num_chunks = int(i['window_duration'] * i['sample_rate'] / i['chunk_size'])
+        self.threshold_db = i['threshold_db']
+        self.secondary_threshold_db = i['secondary_threshold_db']
+        self.animation_interval = i['animation_interval']
+        self.show_display = i['show_display']
+
+        # Save preprocessing properties
+        self.medfilt_kernel = p['medfilt_kernel']
+        self.normalize_min = p['normalize_min']
+        self.normalize_max = p['normalize_max']
+        self.frequency_min = p['frequency_min']
+        self.frequency_max = p['frequency_max']
+
+
+        # Save activity detection properties
+        self.record_duration = a['record_duration']
 
         # Compute full FFT frequency bins and create frequency mask (500-5000 Hz)
-        full_freqs = np.fft.rfftfreq(chunk_size, d=1/sample_rate)
-        self.freq_mask = (full_freqs >= 500) & (full_freqs <= 5000)
+        full_freqs = np.fft.rfftfreq(self.chunk_size, d=1/self.sample_rate)
+        self.freq_mask = (full_freqs >= self.frequency_min) & (full_freqs <= self.frequency_max)
         self.trimmed_freqs = full_freqs[self.freq_mask]
 
         # Initialize spectrogram buffer (rows: time slices, columns: frequency bins)
@@ -57,7 +73,7 @@ class RealTimeSpectrogram:
         # Setup display if required
         if self.show_display:
             self.fig, self.ax = plt.subplots(figsize=(10, 6))
-            self.ani = FuncAnimation(self.fig, self.update, interval=50, blit=False)
+            self.ani = FuncAnimation(self.fig, self.update, interval=self.animation_interval, blit=False)
 
     def audio_callback(self, indata, frames, time_info, status):
         if status:
@@ -83,23 +99,23 @@ class RealTimeSpectrogram:
         filtered_max_freqs = np.where(filtered_max_freqs == np.min(filtered_max_freqs),
                                       np.nan, filtered_max_freqs)
         # If display is enabled, update the plot
-        if self.show_display:
-            self.ax.clear()
-            extent = [0, self.window_duration, self.trimmed_freqs[0], self.trimmed_freqs[-1]]
-            self.ax.imshow(self.spectrogram.T, origin='lower', aspect='auto',
-                           extent=extent, cmap='viridis')
-            self.ax.set_xlabel("Time (s)")
-            self.ax.set_ylabel("Frequency (Hz)")
-            self.ax.set_title("Real-Time Spectrogram (500-5000 Hz) with Argmax")
-            valid = max_values > self.secondary_threshold_db
-            if np.any(valid):
-                self.ax.plot(times[valid], filtered_max_freqs[valid], marker='o',
-                             linestyle='-', color='red', markersize=5)
+        #if self.show_display:
+        #    self.ax.clear()
+        #    extent = [0, self.window_duration, self.trimmed_freqs[0], self.trimmed_freqs[-1]]
+        #    self.ax.imshow(self.spectrogram.T, origin='lower', aspect='auto',
+        #                   extent=extent, cmap='viridis')
+        #    self.ax.set_xlabel("Time (s)")
+        #    self.ax.set_ylabel("Frequency (Hz)")
+        #    self.ax.set_title("Real-Time Spectrogram (500-5000 Hz) with Argmax")
+        #    valid = max_values > self.secondary_threshold_db
+        #    if np.any(valid):
+        #        self.ax.plot(times[valid], filtered_max_freqs[valid], marker='o',
+        #                     linestyle='-', color='red', markersize=5)
 
         # Format datastream
         viridis = plt.get_cmap('viridis')
-        min_val = -10.0
-        max_val =  55.0
+        min_val = self.normalize_min
+        max_val = self.normalize_max
 
         # Perform min-max normalization
         normalized_spectrogram = (np.flipud(self.spectrogram.T) - min_val) / (max_val - min_val)
@@ -118,7 +134,7 @@ class RealTimeSpectrogram:
             self.recording = True
             self.record_start_time = current_time
             self.node.get_logger().info("Start recording")
-        elif self.recording and np.isnan(current_marker) and current_time - self.record_start_time > 1.5:
+        elif self.recording and np.isnan(current_marker) and current_time - self.record_start_time > self.record_duration:
             duration = current_time - self.record_start_time
             event_start_rel = self.window_duration - duration
             event_indices = np.where((times >= event_start_rel) & (max_values > self.secondary_threshold_db))[0]
@@ -160,8 +176,8 @@ class RealTimeSpectrogram:
 
             # Format datastream
             viridis = plt.get_cmap('viridis')
-            min_val = -10.0
-            max_val =  55.0
+            min_val = self.normalize_min
+            max_val = self.normalize_max
 
             # Perform min-max normalization
             normalized_spectrogram = (np.flipud(self.spectrogram.T) - min_val) / (max_val - min_val)
@@ -199,27 +215,36 @@ class RealTimeSpectrogramNode(Node):
     def __init__(self):
         super().__init__('real_time_spectrogram_node')
         self.get_logger().info('Real Time Spectrogram Node initialized.')
-        self.pitch_pub = self.create_publisher(
-            PitchTrack,
-            'pitch_track',
-            self.get_qos()
-        )
-        self.image_pub = self.create_publisher(
-            Image,
-            'pitch_image',
-            self.get_image_qos()
-        )
+
+        self.config_file = os.getenv('WHISTLE_CONF')
+        with open(self.config_file) as f:
+            self.config = yaml.safe_load(f)
+
+        # Publisher for live spectrogram
         self.image_stream = self.create_publisher(
             Image,
-            'audio_stream',
+            self.config['audio_filter']['input_stream']['topic'],
             self.get_image_qos()
         )
+        # Publisher for processing spectrogram
+        self.image_pub = self.create_publisher(
+            Image,
+            self.config['audio_filter']['preprocessing']['topic'],
+            self.get_image_qos()
+        )
+        # Publisher for detected activity
+        self.pitch_pub = self.create_publisher(
+            PitchTrack,
+            self.config['audio_filter']['activity_detection']['topic'],
+            self.get_qos()
+        )
+
         # Pass show_display argument here (set to False to disable GUI)
-        self.spectro = RealTimeSpectrogram(node=self, pitch_pub=self.pitch_pub,
-                                           image_pub=self.image_pub, image_stream=self.image_stream,
-                                           sample_rate=44100, chunk_size=1024, window_duration=5,
-                                           threshold_db=-10, secondary_threshold_db=-5,
-                                           medfilt_kernel=3, show_display=False)
+        self.spectro = RealTimeSpectrogram(node=self,
+                                           pitch_pub=self.pitch_pub,
+                                           image_pub=self.image_pub,
+                                           image_stream=self.image_stream,
+                                           config=self.config)
 
     def get_qos(self):
         return QoSProfile(

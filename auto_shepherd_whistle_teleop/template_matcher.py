@@ -2,47 +2,49 @@ import os
 import yaml
 import cv2
 import numpy as np
-
-import rclpy
-from rclpy.node import Node
-from sensor_msgs.msg import Image
 from cv_bridge import CvBridge
 from ament_index_python.packages import get_package_share_directory
 
+import rclpy
+from rclpy.node import Node
+
+from sensor_msgs.msg import Image
+
+
 class ImageTemplateMatcher(Node):
-    def __init__(self, config_file, package_name='auto_shepherd_whistle_teleop'):
+    def __init__(self):
         super().__init__('image_template_matcher')
         self.bridge = CvBridge()
-        self.package_name = package_name
-        self.config = self.load_config(config_file)
-        self.template_infos = self.config.get('templates', [])
-        self.templates = self.load_templates(self.template_infos)
-        
+
+        # Load config file
+        self.config_file = os.getenv('WHISTLE_CONF')
+        with open(self.config_file) as f:
+            self.config = yaml.safe_load(f)
+        topics = self.config['template_matching']['topics']
+        samples = self.config['template_matching']['samples']
+
+        # Load template samples
+        self.templates = self.load_templates(samples)
+
         # Subscriber for incoming images on /pitch_img
         self.subscription = self.create_subscription(
             Image,
-            '/pitch_image',
+            topics['input_stream'],
             self.image_callback,
             10
         )
+
         # Publisher for annotated images on labelled_pitch_image
-        self.image_pub = self.create_publisher(Image, 'labelled_pitch_image', 10)
-        
+        self.image_pub = self.create_publisher(
+            Image,
+            topics['output_stream'],
+            10
+        )
+
         self.get_logger().info('Image Template Matcher Node initialized.')
 
-    def load_config(self, config_file):
-        """
-        Loads the YAML configuration.
-        If the path is relative, it will be taken from the package share directory.
-        """
-        if not os.path.isabs(config_file):
-            config_file = os.path.join(get_package_share_directory(self.package_name), config_file)
-        self.get_logger().info(f'Loading configuration from {config_file}')
-        with open(config_file, 'r') as f:
-            config = yaml.safe_load(f)
-        return config
 
-    def load_templates(self, template_infos):
+    def load_templates(self, samples):
         """
         Loads each template image as specified in the configuration.
         Each template entry includes:
@@ -52,18 +54,33 @@ class ImageTemplateMatcher(Node):
           - action: an identifier for what to do when the template is matched
         """
         templates = []
-        for info in template_infos:
-            filename = info.get('filename')
-            sensitivity = info.get('sensitivity', 0.8)  # default threshold if not provided
-            bounding_box_colour = info.get('bounding_box_colour', [0, 255, 0])
-            action = info.get('action', None)
-            
-            # Determine full path: if filename starts with '/', it's an absolute path.
-            if os.path.isabs(filename):
-                full_path = filename
-            else:
-                full_path = os.path.join(get_package_share_directory(self.package_name), filename)
-            
+
+        # Determine full path
+        if samples['absolute_filepath']:
+            full_path = samples['absolute_filepath']
+        else:
+            pkg = get_package_share_directory(samples['share_directory_filepath']['package'])
+            full_path = os.path.join(pkg, samples['share_directory_filepath']['subpath'])
+        self.get_logger().info(f'Loading templates from {full_path}')
+
+        # Identify images
+        for group in samples['details']:
+            directory = os.path.join(full_path, group['sub_directory'])
+            for file in os.listdir(directory):
+                filename = os.fsdecode(file)
+                if filename.endswith(".png"):
+
+                    # Add file to detection
+                    templates.append({
+                        'file': filename,
+                        'image': os.path.join(directory, filename),
+                        'sensitivity': group['sensitivity'],
+                        'bounding_box_colour': group['bounding_box_colour'],
+                        'action': group['action']
+                    })
+                    self.get_logger().info(f'Loaded template {filename} with action "{group["action"]}"')
+
+
             # Load the template in grayscale
             template_image = cv2.imread(full_path, cv2.IMREAD_GRAYSCALE)
             if template_image is not None:
@@ -99,7 +116,7 @@ class ImageTemplateMatcher(Node):
                 sensitivity = tmpl['sensitivity']
                 bounding_box_colour = tmpl['bounding_box_colour']
                 action = tmpl['action']
-                
+
                 best_val = -np.inf
                 best_scale = None
                 best_loc = None
@@ -107,6 +124,8 @@ class ImageTemplateMatcher(Node):
 
                 # Try matching over a range of scales (e.g., 0.5 to 1.5 times the template size)
                 for scale in np.linspace(0.5, 1.5, 10):
+                    print(template, scale)
+                    print(type(template))
                     resized_template = cv2.resize(template, None, fx=scale, fy=scale, interpolation=cv2.INTER_AREA)
                     # Skip if the template is larger than the image
                     if resized_template.shape[0] > gray_image.shape[0] or resized_template.shape[1] > gray_image.shape[1]:
@@ -136,26 +155,20 @@ class ImageTemplateMatcher(Node):
             # Publish the annotated image to the labelled_pitch_image topic
             annotated_msg = self.bridge.cv2_to_imgmsg(cv_image, encoding='bgr8')
             self.image_pub.publish(annotated_msg)
-            
-            # (Optional) Display the annotated image locally for debugging
-            #cv2.imshow("Matched", cv_image)
-            #cv2.waitKey(1)
-            
+
         except Exception as e:
             self.get_logger().error(f'Error processing image: {str(e)}')
+            raise e
 
 def main(args=None):
     rclpy.init(args=args)
-    # Specify the config file relative to the package share directory,
-    # or provide an absolute path if desired.
-    config_file = 'config/template_matching_config.yaml'  # update to your config file location
-    node = ImageTemplateMatcher(config_file)
-    
+    node = ImageTemplateMatcher()
+
     try:
         rclpy.spin(node)
     except KeyboardInterrupt:
         pass
-    
+
     node.destroy_node()
     rclpy.shutdown()
 

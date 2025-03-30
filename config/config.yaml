@@ -1,0 +1,56 @@
+audio_filter:
+    input_stream:
+        sample_rate: 44100
+        chunk_size: 1024
+        window_duration: 5
+        threshold_db: -10
+        secondary_threshold_db: -5
+        animation_interval: 50
+        show_display: False
+        topic: 'audio_stream'
+    preprocessing:
+        medfilt_kernel: 3
+        normalize_min: -10
+        normalize_max: 55
+        frequency_min: 500
+        frequency_max: 5000
+        topic: 'pitch_image'
+    activity_detection:
+        record_duration: 1.5
+        topic: 'pitch_track'
+
+template_matching:
+    topics:
+        input_stream: 'audio_stream'
+        output_labels: 'labels'
+        output_stream: 'labelled_stream'
+    samples:
+        absolute_filepath: ''
+        share_directory_filepath:
+            package: 'auto_shepherd_whistle_teleop'
+            subpath: 'templates/'
+        details:
+          - action: 'stop'
+            bounding_box_colour: [0,0,255]
+            sensitivity: 0.15
+            sub_directory: 'stop/'
+
+          - action: 'forward'
+            bounding_box_colour: [0,255,255]
+            sensitivity: 0.30
+            sub_directory: 'forward/'
+
+          - action: 'backward'
+            bounding_box_colour: [0,255,0]
+            sensitivity: 0.30
+            sub_directory: 'backward/'
+
+          - action: 'left'
+            bounding_box_colour: [255,0,255]
+            sensitivity: 0.30
+            sub_directory: 'left/'
+
+          - action: 'right'
+            bounding_box_colour: [255,255,0]
+            sensitivity: 0.30
+            sub_directory: 'right/'
