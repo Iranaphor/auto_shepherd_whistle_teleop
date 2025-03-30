@@ -14,7 +14,7 @@ audio_filter:
         frequency_min: 500
         frequency_max: 5000
     activity_detection:
-        run: True
+        run: False
         record_duration: 1.5
     topics:
         input:

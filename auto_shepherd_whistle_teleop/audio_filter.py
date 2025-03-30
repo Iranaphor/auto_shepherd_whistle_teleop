@@ -1,5 +1,6 @@
 import os
 import yaml
+import cv2
 import rclpy
 from rclpy.node import Node
 from rclpy.qos import QoSProfile, QoSHistoryPolicy, QoSReliabilityPolicy, QoSDurabilityPolicy
@@ -193,9 +194,25 @@ class RealTimeSpectrogram:
             # Perform min-max normalization
             normalized_spectrogram = (np.flipud(self.spectrogram.T) - min_val) / (max_val - min_val)
             normalized_spectrogram_uint8 = (normalized_spectrogram * 255).astype(np.uint8)
+            normalized_spectrogram_uint8 = np.ascontiguousarray(normalized_spectrogram_uint8)
 
             colored_spectrogram = viridis(normalized_spectrogram)[:, :, :3]
             colored_spectrogram = (colored_spectrogram * 255).astype(np.uint8)
+
+            # Draw markers on the mono image (white circle with pixel value 255)
+            valid = max_values > self.secondary_threshold_db
+            height, width = normalized_spectrogram_uint8.shape
+            for t, freq in zip(times[valid], filtered_max_freqs[valid]):
+                # Check if not NaN
+                if np.isnan(freq):
+                    continue
+                # Convert time and frequency to x/y
+                x = int((t / self.window_duration) * width)
+                y = height - int(((freq - self.frequency_min) / (self.frequency_max - self.frequency_min)) * height)
+                # Plot circles to raw and rgb images if within image
+                if 0 <= x < width and 0 <= y < height:
+                    cv2.circle(normalized_spectrogram_uint8, (x, y), radius=2, color=255, thickness=1)
+                    cv2.circle(colored_spectrogram, (x, y), radius=2, color=(255, 0, 0), thickness=1)
 
             # Convert to ROS2 Image and publish
             ros_image = self.bridge.cv2_to_imgmsg(normalized_spectrogram_uint8, encoding="mono8")
