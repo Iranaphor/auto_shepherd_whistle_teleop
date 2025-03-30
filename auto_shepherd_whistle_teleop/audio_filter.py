@@ -19,16 +19,18 @@ from sensor_msgs.msg import Image
 from builtin_interfaces.msg import Time as RosTime
 
 class RealTimeSpectrogram:
-    def __init__(self, node, pitch_pub, image_pub, image_stream, config):
+    def __init__(self, node, image_stream_raw, image_stream_rgb, image_pub_raw, image_pub_rgb, pitch_pub, config):
         """
         node: A ROS2 Node instance for logging and clock.
         pitch_pub: A ROS2 publisher for PitchTrack messages.
         show_display: Boolean flag. If True, the spectrogram display (GUI) is shown.
         """
         self.node = node
+        self.image_stream_raw = image_stream_raw
+        self.image_stream_rgb = image_stream_rgb
+        self.image_pub_raw = image_pub_raw
+        self.image_pub_rgb = image_pub_rgb
         self.pitch_pub = pitch_pub
-        self.image_pub = image_pub
-        self.image_stream = image_stream
         self.bridge = CvBridge()
 
         # Audio and display parameters
@@ -56,6 +58,7 @@ class RealTimeSpectrogram:
 
 
         # Save activity detection properties
+        self.run_activity_detection = a['run']
         self.record_duration = a['record_duration']
 
         # Compute full FFT frequency bins and create frequency mask (500-5000 Hz)
@@ -119,12 +122,20 @@ class RealTimeSpectrogram:
 
         # Perform min-max normalization
         normalized_spectrogram = (np.flipud(self.spectrogram.T) - min_val) / (max_val - min_val)
+        normalized_spectrogram_uint8 = (normalized_spectrogram * 255).astype(np.uint8)
+
         colored_spectrogram = viridis(normalized_spectrogram)[:, :, :3]  # Exclude the alpha channel
         colored_spectrogram = (colored_spectrogram * 255).astype(np.uint8)
 
         # Convert to ROS2 Image and publish
+        ros_image = self.bridge.cv2_to_imgmsg(normalized_spectrogram_uint8, encoding="mono8")
+        self.image_stream_raw.publish(ros_image)
         ros_image = self.bridge.cv2_to_imgmsg(colored_spectrogram, encoding="rgb8")
-        self.image_stream.publish(ros_image)
+        self.image_stream_rgb.publish(ros_image)
+
+        # Only proceed if activity detection is enabled
+        if not self.run_activity_detection:
+            return []
 
         # --- Event Detection & PitchTrack Publishing ---
         current_marker = filtered_max_freqs[-1]
@@ -181,12 +192,16 @@ class RealTimeSpectrogram:
 
             # Perform min-max normalization
             normalized_spectrogram = (np.flipud(self.spectrogram.T) - min_val) / (max_val - min_val)
+            normalized_spectrogram_uint8 = (normalized_spectrogram * 255).astype(np.uint8)
+
             colored_spectrogram = viridis(normalized_spectrogram)[:, :, :3]
             colored_spectrogram = (colored_spectrogram * 255).astype(np.uint8)
 
             # Convert to ROS2 Image and publish
+            ros_image = self.bridge.cv2_to_imgmsg(normalized_spectrogram_uint8, encoding="mono8")
+            self.image_pub_raw.publish(ros_image)
             ros_image = self.bridge.cv2_to_imgmsg(colored_spectrogram, encoding="rgb8")
-            self.image_pub.publish(ros_image)
+            self.image_pub_rgb.publish(ros_image)
 
             self.recording = False
             self.record_start_time = None
@@ -219,31 +234,44 @@ class RealTimeSpectrogramNode(Node):
         self.config_file = os.getenv('WHISTLE_CONF')
         with open(self.config_file) as f:
             self.config = yaml.safe_load(f)
+        t = self.config['audio_filter']['topics']
 
         # Publisher for live spectrogram
-        self.image_stream = self.create_publisher(
+        self.image_stream_raw = self.create_publisher(
             Image,
-            self.config['audio_filter']['input_stream']['topic'],
+            t['input']['raw'],
+            self.get_image_qos()
+        )
+        self.image_stream_rgb = self.create_publisher(
+            Image,
+            t['input']['rgb'],
             self.get_image_qos()
         )
         # Publisher for processing spectrogram
-        self.image_pub = self.create_publisher(
+        self.image_pub_raw = self.create_publisher(
             Image,
-            self.config['audio_filter']['preprocessing']['topic'],
+            t['detector']['raw'],
+            self.get_image_qos()
+        )
+        self.image_pub_rgb = self.create_publisher(
+            Image,
+            t['detector']['rgb'],
             self.get_image_qos()
         )
         # Publisher for detected activity
         self.pitch_pub = self.create_publisher(
             PitchTrack,
-            self.config['audio_filter']['activity_detection']['topic'],
+            t['detector']['codex'],
             self.get_qos()
         )
 
         # Pass show_display argument here (set to False to disable GUI)
         self.spectro = RealTimeSpectrogram(node=self,
+                                           image_stream_raw=self.image_stream_raw,
+                                           image_stream_rgb=self.image_stream_rgb,
+                                           image_pub_raw=self.image_pub_raw,
+                                           image_pub_rgb=self.image_pub_rgb,
                                            pitch_pub=self.pitch_pub,
-                                           image_pub=self.image_pub,
-                                           image_stream=self.image_stream,
                                            config=self.config)
 
     def get_qos(self):

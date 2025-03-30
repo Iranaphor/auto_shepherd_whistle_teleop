@@ -7,25 +7,33 @@ audio_filter:
         secondary_threshold_db: -5
         animation_interval: 50
         show_display: False
-        topic: 'audio_stream'
     preprocessing:
         medfilt_kernel: 3
         normalize_min: -10
         normalize_max: 55
         frequency_min: 500
         frequency_max: 5000
-        topic: 'pitch_image'
     activity_detection:
+        run: True
         record_duration: 1.5
-        topic: 'pitch_track'
+    topics:
+        input:
+            raw: 'stream/raw'
+            rgb: 'stream/rgb'
+        detector:
+            raw: 'detected/raw'
+            rgb: 'detected/rgb'
+            codex: 'detected/pitch_track'
 
 template_matching:
     topics:
-        input_stream: 'audio_stream'
-        output_labels: 'labels'
-        output_stream: 'labelled_stream'
+        input:
+            raw: 'stream/raw'
+        output:
+            raw: 'labelled/raw'
+            rgb: 'labelled/rgb'
     samples:
-        absolute_filepath: ''
+        absolute_dir: ''
         share_directory_filepath:
             package: 'auto_shepherd_whistle_teleop'
             subpath: 'templates/'
