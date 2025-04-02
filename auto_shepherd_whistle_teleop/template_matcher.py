@@ -1,4 +1,5 @@
 import os
+import time
 import yaml
 import cv2
 import numpy as np
@@ -79,6 +80,7 @@ class ImageTemplateMatcher(Node):
                     # Add file to detection
                     template_image = cv2.imread(os.path.join(directory, filename), cv2.IMREAD_GRAYSCALE)
                     templates.append({
+                        'sub_directory': group['sub_directory'],
                         'file': filename,
                         'image': template_image,
                         'sensitivity': group['sensitivity'],
@@ -86,7 +88,6 @@ class ImageTemplateMatcher(Node):
                         'action': group['action']
                     })
                     self.get_logger().info(f'Loaded template {filename} with action "{group["action"]}"')
-
         return templates
 
     def image_callback(self, msg):
@@ -95,6 +96,8 @@ class ImageTemplateMatcher(Node):
         runs multi-scale template matching for each template, draws bounding boxes for each match
         on a single image, and publishes the annotated image to labelled_pitch_image.
         """
+        start_time = time.time()
+        total_attempts = 0
         try:
             # Convert the ROS Image message to an OpenCV BGR image
             cv_image = self.bridge.imgmsg_to_cv2(msg, desired_encoding='mono8')
@@ -122,13 +125,14 @@ class ImageTemplateMatcher(Node):
                 best_resized_template = None
 
                 # Try matching over a range of scales (e.g., 0.5 to 1.5 times the template size)
-                for scale_x in np.linspace(0.5, 1.5, 10):
-                    for scale_y in np.linspace(0.5, 1.5, 10):
+                for scale_x in np.linspace(0.15, 1.0, 10):
+                    for scale_y in np.linspace(0.15, 1.0, 10):
                         resized_template = cv2.resize(template, None, fx=scale_x, fy=scale_y, interpolation=cv2.INTER_AREA)
                         # Skip if the template is larger than the image
                         if resized_template.shape[0] > cv_image_raw.shape[0] or resized_template.shape[1] > cv_image_raw.shape[1]:
                             continue
                         result = cv2.matchTemplate(cv_image, resized_template, cv2.TM_CCOEFF_NORMED)
+                        total_attempts += 1
                         min_val, max_val, min_loc, max_loc = cv2.minMaxLoc(result)
                         if max_val > best_val:
                             best_val = max_val
@@ -163,6 +167,7 @@ class ImageTemplateMatcher(Node):
         except Exception as e:
             self.get_logger().error(f'Error processing image: {str(e)}')
             raise e
+        print(f"--- {(time.time() - start_time):.4f}s for {total_attempts} total attempts ---")
 
 def main(args=None):
     rclpy.init(args=args)

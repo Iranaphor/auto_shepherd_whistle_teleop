@@ -40,25 +40,25 @@ template_matching:
         details:
           - action: 'stop'
             bounding_box_colour: [0,0,255]
-            sensitivity: 0.35
+            sensitivity: 0.7
             sub_directory: 'wolf_whistle/'
 
           - action: 'forward'
             bounding_box_colour: [0,255,255]
-            sensitivity: 0.35
-            sub_directory: 'forward/'
+            sensitivity: 0.7
+            sub_directory: 'good_bad_ugly/'
 
           - action: 'backward'
             bounding_box_colour: [0,255,0]
-            sensitivity: 0.35
-            sub_directory: 'backward/'
+            sensitivity: 0.7
+            sub_directory: 'hill_slope/'
 
           - action: 'left'
             bounding_box_colour: [255,0,255]
-            sensitivity: 0.35
-            sub_directory: 'left/'
+            sensitivity: 0.7
+            sub_directory: 'woody/'
 
           - action: 'right'
             bounding_box_colour: [255,255,0]
-            sensitivity: 0.35
-            sub_directory: 'right/'
+            sensitivity: 0.7
+            sub_directory: '4_wide_invert_siren/'
