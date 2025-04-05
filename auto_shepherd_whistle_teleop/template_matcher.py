@@ -35,6 +35,8 @@ class ImageTemplateMatcher(Node):
             self.image_callback,
             10
         )
+        self.input_delay = topics['input']['delay']
+        self.last_message_secs = 0
 
         # Publisher for annotated images on labelled_pitch_image
         self.labelled_image_pub_raw = self.create_publisher(
@@ -98,6 +100,22 @@ class ImageTemplateMatcher(Node):
         """
         start_time = time.time()
         total_attempts = 0
+
+        #print(self.last_message_secs)
+        #print(self.input_delay)
+        #print(msg.header.stamp.sec)
+
+        if self.last_message_secs == 0:
+            #print('first')
+            pass
+        elif msg.header.stamp.sec - self.input_delay > self.last_message_secs:
+            #print('go')
+            pass
+        else:
+            #print('skip')
+            return
+        self.last_message_secs = msg.header.stamp.sec
+
         try:
             # Convert the ROS Image message to an OpenCV BGR image
             cv_image = self.bridge.imgmsg_to_cv2(msg, desired_encoding='mono8')
@@ -111,6 +129,8 @@ class ImageTemplateMatcher(Node):
 
             # Convert to grayscale for matching
             # gray_image = cv2.medianBlur(gray_image, 5)
+
+            best_from_all = {'bv': 0, 'best_scale':None, 'best_val':None, 'txt':None, 'text_position':None, 'best_loc':None, 'w':None, 'h':None, 'templ':None, 'bounding_box_colour':None}
 
             # For each template, perform multi-scale matching and draw bounding boxes if matched
             for tmpl in self.templates:
@@ -150,13 +170,34 @@ class ImageTemplateMatcher(Node):
                     text_position = (best_loc[0], best_loc[1] - 10 if best_loc[1] - 10 > 10 else best_loc[1] + 10)
                     txt = f"{action} {round(best_val,2)}"
                     # Draw to mono image
-                    cv2.rectangle(cv_image_raw, best_loc, (best_loc[0] + w, best_loc[1] + h), bounding_box_colour, 2)
-                    cv2.putText(cv_image_raw, txt, text_position, cv2.FONT_HERSHEY_SIMPLEX, 0.4, bounding_box_colour, 1)
+                    #cv2.rectangle(cv_image_raw, best_loc, (best_loc[0] + w, best_loc[1] + h), bounding_box_colour, 2)
+                    #cv2.putText(cv_image_raw, txt, text_position, cv2.FONT_HERSHEY_SIMPLEX, 0.4, bounding_box_colour, 1)
                     # Draw to rgb image
-                    cv2.rectangle(cv_image_rgb, best_loc, (best_loc[0] + w, best_loc[1] + h), bounding_box_colour, 2)
-                    cv2.putText(cv_image_rgb, txt, text_position, cv2.FONT_HERSHEY_SIMPLEX, 0.4, bounding_box_colour, 1)
+                    #cv2.rectangle(cv_image_rgb, best_loc, (best_loc[0] + w, best_loc[1] + h), bounding_box_colour, 2)
+                    #cv2.putText(cv_image_rgb, txt, text_position, cv2.FONT_HERSHEY_SIMPLEX, 0.4, bounding_box_colour, 1)
+                    if best_val > best_from_all['bv']:
+                         best_from_all = {'bv':best_val, 'best_scale':bs, 'best_val':bv, 'txt': txt, 'text_position': text_position, 'best_loc': best_loc, 'w':w, 'h':h, 'tmpl':tmpl, 'bounding_box_colour': bounding_box_colour, 'action':action}
                 else:
                     self.get_logger().debug(f'No match for {tmpl["file"]} (best score: {best_val:.2f})')
+
+
+            # If the best match exceeds the sensitivity threshold, draw the bounding box and log the action
+            if best_from_all['bv'] > 0:
+                bs = best_from_all['best_scale']
+                bv = best_from_all['best_val']
+                action = best_from_all['action']
+                self.get_logger().info(f'Best Match at scale {bs} (score: {bv} for action "{action}"')
+                w, h = best_from_all['w'], best_from_all['h']
+                best_loc = best_from_all['best_loc']
+                text_position = best_from_all['text_position']
+                txt = best_from_all['txt']
+                bounding_box_colour = best_from_all['bounding_box_colour']
+                # Draw to mono image
+                cv2.rectangle(cv_image_raw, best_loc, (best_loc[0] + w, best_loc[1] + h), bounding_box_colour, 2)
+                cv2.putText(cv_image_raw, txt, text_position, cv2.FONT_HERSHEY_SIMPLEX, 0.4, bounding_box_colour, 1)
+                # Draw to rgb image
+                cv2.rectangle(cv_image_rgb, best_loc, (best_loc[0] + w, best_loc[1] + h), bounding_box_colour, 2)
+                cv2.putText(cv_image_rgb, txt, text_position, cv2.FONT_HERSHEY_SIMPLEX, 0.4, bounding_box_colour, 1)
 
             # Publish the annotated image to the labelled_pitch_image topic
             annotated_msg_raw = self.bridge.cv2_to_imgmsg(cv_image_raw, encoding='bgr8')

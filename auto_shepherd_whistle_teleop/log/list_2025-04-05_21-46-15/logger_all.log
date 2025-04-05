@@ -1,0 +1,363 @@
+[0.084s] DEBUG:colcon:Command line arguments: ['/usr/bin/colcon', 'list', '--packages-select', 'auto_shepherd_whistle_teleop', '--base-paths', '/home/jheselden/ros2_ws/', '-p']
+[0.084s] DEBUG:colcon:Parsed command line arguments: Namespace(log_base=None, log_level=None, verb_name='list', build_base='build', ignore_user_meta=False, metas=['./colcon.meta'], base_paths=['/home/jheselden/ros2_ws/'], packages_ignore=None, packages_ignore_regex=None, paths=None, packages_up_to=None, packages_up_to_regex=None, packages_above=None, packages_above_and_dependencies=None, packages_above_depth=None, packages_select_by_dep=None, packages_skip_by_dep=None, packages_skip_up_to=None, packages_select_build_failed=False, packages_skip_build_finished=False, packages_select_test_failures=False, packages_skip_test_passed=False, packages_select=['auto_shepherd_whistle_teleop'], packages_skip=None, packages_select_regex=None, packages_skip_regex=None, packages_start=None, packages_end=None, allow_overriding=[], topological_order=False, names_only=False, paths_only=True, topological_graph=False, topological_graph_dot=False, topological_graph_density=False, topological_graph_legend=False, topological_graph_dot_cluster=False, topological_graph_dot_include_skipped=False, verb_parser=<colcon_defaults.argument_parser.defaults.DefaultArgumentsDecorator object at 0x7a445efa0d00>, verb_extension=<colcon_package_information.verb.list.ListVerb object at 0x7a445efa02b0>, main=<bound method ListVerb.main of <colcon_package_information.verb.list.ListVerb object at 0x7a445efa02b0>>)
+[0.122s] Level 1:colcon.colcon_core.package_discovery:discover_packages(colcon_meta) check parameters
+[0.122s] Level 1:colcon.colcon_core.package_discovery:discover_packages(recursive) check parameters
+[0.122s] Level 1:colcon.colcon_core.package_discovery:discover_packages(ignore) check parameters
+[0.122s] Level 1:colcon.colcon_core.package_discovery:discover_packages(path) check parameters
+[0.122s] Level 1:colcon.colcon_core.package_discovery:discover_packages(recursive) discover
+[0.122s] INFO:colcon.colcon_core.package_discovery:Crawling recursively for packages in '/home/jheselden/ros2_ws'
+[0.122s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws) by extensions ['ignore', 'ignore_ament_install']
+[0.122s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws) by extension 'ignore'
+[0.122s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws) by extension 'ignore_ament_install'
+[0.122s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws) by extensions ['colcon_pkg']
+[0.122s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws) by extension 'colcon_pkg'
+[0.122s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws) by extensions ['colcon_meta']
+[0.122s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws) by extension 'colcon_meta'
+[0.122s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws) by extensions ['ros']
+[0.122s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws) by extension 'ros'
+[0.133s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws) by extensions ['cmake', 'python']
+[0.133s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws) by extension 'cmake'
+[0.133s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws) by extension 'python'
+[0.133s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws) by extensions ['python_setup_py']
+[0.133s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws) by extension 'python_setup_py'
+[0.134s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/build) by extensions ['ignore', 'ignore_ament_install']
+[0.134s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/build) by extension 'ignore'
+[0.134s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/build) ignored
+[0.134s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/install) by extensions ['ignore', 'ignore_ament_install']
+[0.134s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/install) by extension 'ignore'
+[0.134s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/install) ignored
+[0.134s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/log) by extensions ['ignore', 'ignore_ament_install']
+[0.134s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/log) by extension 'ignore'
+[0.135s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/log) ignored
+[0.135s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src) by extensions ['ignore', 'ignore_ament_install']
+[0.135s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src) by extension 'ignore'
+[0.135s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src) by extension 'ignore_ament_install'
+[0.135s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src) by extensions ['colcon_pkg']
+[0.135s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src) by extension 'colcon_pkg'
+[0.135s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src) by extensions ['colcon_meta']
+[0.135s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src) by extension 'colcon_meta'
+[0.135s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src) by extensions ['ros']
+[0.135s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src) by extension 'ros'
+[0.135s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src) by extensions ['cmake', 'python']
+[0.135s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src) by extension 'cmake'
+[0.135s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src) by extension 'python'
+[0.135s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src) by extensions ['python_setup_py']
+[0.135s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src) by extension 'python_setup_py'
+[0.135s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/agrifleet_msgs) by extensions ['ignore', 'ignore_ament_install']
+[0.136s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/agrifleet_msgs) by extension 'ignore'
+[0.136s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/agrifleet_msgs) by extension 'ignore_ament_install'
+[0.136s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/agrifleet_msgs) by extensions ['colcon_pkg']
+[0.136s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/agrifleet_msgs) by extension 'colcon_pkg'
+[0.136s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/agrifleet_msgs) by extensions ['colcon_meta']
+[0.136s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/agrifleet_msgs) by extension 'colcon_meta'
+[0.136s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/agrifleet_msgs) by extensions ['ros']
+[0.136s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/agrifleet_msgs) by extension 'ros'
+[0.139s] DEBUG:colcon.colcon_core.package_identification:Package '/home/jheselden/ros2_ws/src/agrifleet_msgs' with type 'ros.ament_cmake' and name 'agrifleet_msgs'
+[0.139s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/auto_shepherd_msgs) by extensions ['ignore', 'ignore_ament_install']
+[0.139s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/auto_shepherd_msgs) by extension 'ignore'
+[0.139s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/auto_shepherd_msgs) by extension 'ignore_ament_install'
+[0.139s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/auto_shepherd_msgs) by extensions ['colcon_pkg']
+[0.139s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/auto_shepherd_msgs) by extension 'colcon_pkg'
+[0.139s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/auto_shepherd_msgs) by extensions ['colcon_meta']
+[0.139s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/auto_shepherd_msgs) by extension 'colcon_meta'
+[0.139s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/auto_shepherd_msgs) by extensions ['ros']
+[0.139s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/auto_shepherd_msgs) by extension 'ros'
+[0.140s] DEBUG:colcon.colcon_core.package_identification:Package '/home/jheselden/ros2_ws/src/auto_shepherd_msgs' with type 'ros.ament_cmake' and name 'auto_shepherd_msgs'
+[0.140s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/auto_shepherd_whistle_teleop) by extensions ['ignore', 'ignore_ament_install']
+[0.140s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/auto_shepherd_whistle_teleop) by extension 'ignore'
+[0.140s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/auto_shepherd_whistle_teleop) by extension 'ignore_ament_install'
+[0.140s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/auto_shepherd_whistle_teleop) by extensions ['colcon_pkg']
+[0.140s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/auto_shepherd_whistle_teleop) by extension 'colcon_pkg'
+[0.140s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/auto_shepherd_whistle_teleop) by extensions ['colcon_meta']
+[0.140s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/auto_shepherd_whistle_teleop) by extension 'colcon_meta'
+[0.140s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/auto_shepherd_whistle_teleop) by extensions ['ros']
+[0.140s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/auto_shepherd_whistle_teleop) by extension 'ros'
+[0.141s] DEBUG:colcon.colcon_core.package_identification:Package '/home/jheselden/ros2_ws/src/auto_shepherd_whistle_teleop' with type 'ros.ament_python' and name 'auto_shepherd_whistle_teleop'
+[0.141s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/auto_shepherd_whistle_teleoptemplates_creator) by extensions ['ignore', 'ignore_ament_install']
+[0.141s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/auto_shepherd_whistle_teleoptemplates_creator) by extension 'ignore'
+[0.141s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/auto_shepherd_whistle_teleoptemplates_creator) by extension 'ignore_ament_install'
+[0.141s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/auto_shepherd_whistle_teleoptemplates_creator) by extensions ['colcon_pkg']
+[0.141s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/auto_shepherd_whistle_teleoptemplates_creator) by extension 'colcon_pkg'
+[0.141s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/auto_shepherd_whistle_teleoptemplates_creator) by extensions ['colcon_meta']
+[0.141s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/auto_shepherd_whistle_teleoptemplates_creator) by extension 'colcon_meta'
+[0.141s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/auto_shepherd_whistle_teleoptemplates_creator) by extensions ['ros']
+[0.141s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/auto_shepherd_whistle_teleoptemplates_creator) by extension 'ros'
+[0.141s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/auto_shepherd_whistle_teleoptemplates_creator) by extensions ['cmake', 'python']
+[0.141s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/auto_shepherd_whistle_teleoptemplates_creator) by extension 'cmake'
+[0.141s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/auto_shepherd_whistle_teleoptemplates_creator) by extension 'python'
+[0.141s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/auto_shepherd_whistle_teleoptemplates_creator) by extensions ['python_setup_py']
+[0.141s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/auto_shepherd_whistle_teleoptemplates_creator) by extension 'python_setup_py'
+[0.141s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/auto_shepherd_whistle_teleoptemplates_creator/test) by extensions ['ignore', 'ignore_ament_install']
+[0.141s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/auto_shepherd_whistle_teleoptemplates_creator/test) by extension 'ignore'
+[0.141s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/auto_shepherd_whistle_teleoptemplates_creator/test) by extension 'ignore_ament_install'
+[0.141s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/auto_shepherd_whistle_teleoptemplates_creator/test) by extensions ['colcon_pkg']
+[0.141s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/auto_shepherd_whistle_teleoptemplates_creator/test) by extension 'colcon_pkg'
+[0.141s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/auto_shepherd_whistle_teleoptemplates_creator/test) by extensions ['colcon_meta']
+[0.141s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/auto_shepherd_whistle_teleoptemplates_creator/test) by extension 'colcon_meta'
+[0.141s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/auto_shepherd_whistle_teleoptemplates_creator/test) by extensions ['ros']
+[0.141s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/auto_shepherd_whistle_teleoptemplates_creator/test) by extension 'ros'
+[0.141s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/auto_shepherd_whistle_teleoptemplates_creator/test) by extensions ['cmake', 'python']
+[0.141s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/auto_shepherd_whistle_teleoptemplates_creator/test) by extension 'cmake'
+[0.141s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/auto_shepherd_whistle_teleoptemplates_creator/test) by extension 'python'
+[0.141s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/auto_shepherd_whistle_teleoptemplates_creator/test) by extensions ['python_setup_py']
+[0.141s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/auto_shepherd_whistle_teleoptemplates_creator/test) by extension 'python_setup_py'
+[0.141s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/cam_calibration) by extensions ['ignore', 'ignore_ament_install']
+[0.141s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/cam_calibration) by extension 'ignore'
+[0.141s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/cam_calibration) by extension 'ignore_ament_install'
+[0.142s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/cam_calibration) by extensions ['colcon_pkg']
+[0.142s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/cam_calibration) by extension 'colcon_pkg'
+[0.142s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/cam_calibration) by extensions ['colcon_meta']
+[0.142s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/cam_calibration) by extension 'colcon_meta'
+[0.142s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/cam_calibration) by extensions ['ros']
+[0.142s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/cam_calibration) by extension 'ros'
+[0.142s] DEBUG:colcon.colcon_core.package_identification:Package '/home/jheselden/ros2_ws/src/cam_calibration' with type 'ros.ament_python' and name 'cam_calibration'
+[0.142s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/environment_common) by extensions ['ignore', 'ignore_ament_install']
+[0.142s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/environment_common) by extension 'ignore'
+[0.142s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/environment_common) by extension 'ignore_ament_install'
+[0.142s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/environment_common) by extensions ['colcon_pkg']
+[0.142s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/environment_common) by extension 'colcon_pkg'
+[0.142s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/environment_common) by extensions ['colcon_meta']
+[0.142s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/environment_common) by extension 'colcon_meta'
+[0.142s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/environment_common) by extensions ['ros']
+[0.142s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/environment_common) by extension 'ros'
+[0.143s] DEBUG:colcon.colcon_core.package_identification:Package '/home/jheselden/ros2_ws/src/environment_common' with type 'ros.ament_python' and name 'environment_common'
+[0.143s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/environment_template) by extensions ['ignore', 'ignore_ament_install']
+[0.143s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/environment_template) by extension 'ignore'
+[0.143s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/environment_template) by extension 'ignore_ament_install'
+[0.143s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/environment_template) by extensions ['colcon_pkg']
+[0.143s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/environment_template) by extension 'colcon_pkg'
+[0.143s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/environment_template) by extensions ['colcon_meta']
+[0.143s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/environment_template) by extension 'colcon_meta'
+[0.143s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/environment_template) by extensions ['ros']
+[0.143s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/environment_template) by extension 'ros'
+[0.143s] DEBUG:colcon.colcon_core.package_identification:Package '/home/jheselden/ros2_ws/src/environment_template' with type 'ros.ament_python' and name 'environment_template'
+[0.143s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/ffr_sim) by extensions ['ignore', 'ignore_ament_install']
+[0.143s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/ffr_sim) by extension 'ignore'
+[0.143s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/ffr_sim) by extension 'ignore_ament_install'
+[0.143s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/ffr_sim) by extensions ['colcon_pkg']
+[0.143s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/ffr_sim) by extension 'colcon_pkg'
+[0.143s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/ffr_sim) by extensions ['colcon_meta']
+[0.143s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/ffr_sim) by extension 'colcon_meta'
+[0.143s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/ffr_sim) by extensions ['ros']
+[0.143s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/ffr_sim) by extension 'ros'
+[0.144s] DEBUG:colcon.colcon_core.package_identification:Package '/home/jheselden/ros2_ws/src/ffr_sim' with type 'ros.ament_python' and name 'ffr_sim'
+[0.144s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/ply_publisher) by extensions ['ignore', 'ignore_ament_install']
+[0.144s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/ply_publisher) by extension 'ignore'
+[0.144s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/ply_publisher) by extension 'ignore_ament_install'
+[0.144s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/ply_publisher) by extensions ['colcon_pkg']
+[0.144s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/ply_publisher) by extension 'colcon_pkg'
+[0.144s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/ply_publisher) by extensions ['colcon_meta']
+[0.144s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/ply_publisher) by extension 'colcon_meta'
+[0.144s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/ply_publisher) by extensions ['ros']
+[0.144s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/ply_publisher) by extension 'ros'
+[0.144s] DEBUG:colcon.colcon_core.package_identification:Package '/home/jheselden/ros2_ws/src/ply_publisher' with type 'ros.ament_python' and name 'ply_publisher'
+[0.144s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/rasberry_coordination) by extensions ['ignore', 'ignore_ament_install']
+[0.144s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/rasberry_coordination) by extension 'ignore'
+[0.145s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/rasberry_coordination) by extension 'ignore_ament_install'
+[0.145s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/rasberry_coordination) by extensions ['colcon_pkg']
+[0.145s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/rasberry_coordination) by extension 'colcon_pkg'
+[0.145s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/rasberry_coordination) by extensions ['colcon_meta']
+[0.145s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/rasberry_coordination) by extension 'colcon_meta'
+[0.145s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/rasberry_coordination) by extensions ['ros']
+[0.145s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/rasberry_coordination) by extension 'ros'
+[0.145s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/rasberry_coordination) by extensions ['cmake', 'python']
+[0.145s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/rasberry_coordination) by extension 'cmake'
+[0.145s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/rasberry_coordination) by extension 'python'
+[0.145s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/rasberry_coordination) by extensions ['python_setup_py']
+[0.145s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/rasberry_coordination) by extension 'python_setup_py'
+[0.145s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/rasberry_coordination/core) by extensions ['ignore', 'ignore_ament_install']
+[0.145s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/rasberry_coordination/core) by extension 'ignore'
+[0.145s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/rasberry_coordination/core) by extension 'ignore_ament_install'
+[0.145s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/rasberry_coordination/core) by extensions ['colcon_pkg']
+[0.145s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/rasberry_coordination/core) by extension 'colcon_pkg'
+[0.145s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/rasberry_coordination/core) by extensions ['colcon_meta']
+[0.145s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/rasberry_coordination/core) by extension 'colcon_meta'
+[0.145s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/rasberry_coordination/core) by extensions ['ros']
+[0.145s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/rasberry_coordination/core) by extension 'ros'
+[0.146s] DEBUG:colcon.colcon_core.package_identification:Package '/home/jheselden/ros2_ws/src/rasberry_coordination/core' with type 'ros.ament_python' and name 'rasberry_coordination_core'
+[0.146s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/rasberry_coordination/msgs) by extensions ['ignore', 'ignore_ament_install']
+[0.146s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/rasberry_coordination/msgs) by extension 'ignore'
+[0.146s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/rasberry_coordination/msgs) by extension 'ignore_ament_install'
+[0.146s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/rasberry_coordination/msgs) by extensions ['colcon_pkg']
+[0.146s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/rasberry_coordination/msgs) by extension 'colcon_pkg'
+[0.146s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/rasberry_coordination/msgs) by extensions ['colcon_meta']
+[0.146s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/rasberry_coordination/msgs) by extension 'colcon_meta'
+[0.146s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/rasberry_coordination/msgs) by extensions ['ros']
+[0.146s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/rasberry_coordination/msgs) by extension 'ros'
+[0.146s] DEBUG:colcon.colcon_core.package_identification:Package '/home/jheselden/ros2_ws/src/rasberry_coordination/msgs' with type 'ros.ament_cmake' and name 'rasberry_coordination_msgs'
+[0.146s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/rasberry_coordination_evaluations) by extensions ['ignore', 'ignore_ament_install']
+[0.146s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/rasberry_coordination_evaluations) by extension 'ignore'
+[0.147s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/rasberry_coordination_evaluations) by extension 'ignore_ament_install'
+[0.147s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/rasberry_coordination_evaluations) by extensions ['colcon_pkg']
+[0.147s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/rasberry_coordination_evaluations) by extension 'colcon_pkg'
+[0.147s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/rasberry_coordination_evaluations) by extensions ['colcon_meta']
+[0.147s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/rasberry_coordination_evaluations) by extension 'colcon_meta'
+[0.147s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/rasberry_coordination_evaluations) by extensions ['ros']
+[0.147s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/rasberry_coordination_evaluations) by extension 'ros'
+[0.147s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/rasberry_coordination_evaluations) by extensions ['cmake', 'python']
+[0.147s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/rasberry_coordination_evaluations) by extension 'cmake'
+[0.147s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/rasberry_coordination_evaluations) by extension 'python'
+[0.147s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/rasberry_coordination_evaluations) by extensions ['python_setup_py']
+[0.147s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/rasberry_coordination_evaluations) by extension 'python_setup_py'
+[0.147s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/rasberry_coordination_evaluations/testing) by extensions ['ignore', 'ignore_ament_install']
+[0.147s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/rasberry_coordination_evaluations/testing) by extension 'ignore'
+[0.147s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/rasberry_coordination_evaluations/testing) by extension 'ignore_ament_install'
+[0.147s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/rasberry_coordination_evaluations/testing) by extensions ['colcon_pkg']
+[0.147s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/rasberry_coordination_evaluations/testing) by extension 'colcon_pkg'
+[0.147s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/rasberry_coordination_evaluations/testing) by extensions ['colcon_meta']
+[0.147s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/rasberry_coordination_evaluations/testing) by extension 'colcon_meta'
+[0.147s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/rasberry_coordination_evaluations/testing) by extensions ['ros']
+[0.147s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/rasberry_coordination_evaluations/testing) by extension 'ros'
+[0.148s] DEBUG:colcon.colcon_core.package_identification:Package '/home/jheselden/ros2_ws/src/rasberry_coordination_evaluations/testing' with type 'ros.ament_python' and name 'rasberry_coordination_testing'
+[0.148s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/stag_ros2) by extensions ['ignore', 'ignore_ament_install']
+[0.148s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/stag_ros2) by extension 'ignore'
+[0.148s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/stag_ros2) by extension 'ignore_ament_install'
+[0.148s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/stag_ros2) by extensions ['colcon_pkg']
+[0.148s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/stag_ros2) by extension 'colcon_pkg'
+[0.148s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/stag_ros2) by extensions ['colcon_meta']
+[0.148s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/stag_ros2) by extension 'colcon_meta'
+[0.148s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/stag_ros2) by extensions ['ros']
+[0.148s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/stag_ros2) by extension 'ros'
+[0.151s] DEBUG:colcon.colcon_core.package_identification:Package '/home/jheselden/ros2_ws/src/stag_ros2' with type 'ros.ament_python' and name 'stag_ros2'
+[0.151s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/staggered_duckling_platooning) by extensions ['ignore', 'ignore_ament_install']
+[0.151s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/staggered_duckling_platooning) by extension 'ignore'
+[0.151s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/staggered_duckling_platooning) by extension 'ignore_ament_install'
+[0.151s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/staggered_duckling_platooning) by extensions ['colcon_pkg']
+[0.151s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/staggered_duckling_platooning) by extension 'colcon_pkg'
+[0.151s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/staggered_duckling_platooning) by extensions ['colcon_meta']
+[0.151s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/staggered_duckling_platooning) by extension 'colcon_meta'
+[0.152s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/staggered_duckling_platooning) by extensions ['ros']
+[0.152s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/staggered_duckling_platooning) by extension 'ros'
+[0.152s] DEBUG:colcon.colcon_core.package_identification:Package '/home/jheselden/ros2_ws/src/staggered_duckling_platooning' with type 'ros.ament_python' and name 'staggered_duckling_platooning'
+[0.152s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/topfleets) by extensions ['ignore', 'ignore_ament_install']
+[0.152s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/topfleets) by extension 'ignore'
+[0.152s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/topfleets) by extension 'ignore_ament_install'
+[0.152s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/topfleets) by extensions ['colcon_pkg']
+[0.152s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/topfleets) by extension 'colcon_pkg'
+[0.152s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/topfleets) by extensions ['colcon_meta']
+[0.152s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/topfleets) by extension 'colcon_meta'
+[0.153s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/topfleets) by extensions ['ros']
+[0.153s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/topfleets) by extension 'ros'
+[0.153s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/topfleets) by extensions ['cmake', 'python']
+[0.153s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/topfleets) by extension 'cmake'
+[0.153s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/topfleets) by extension 'python'
+[0.153s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/topfleets) by extensions ['python_setup_py']
+[0.153s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/topfleets) by extension 'python_setup_py'
+[0.153s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/topfleets/topfleets_coordinator) by extensions ['ignore', 'ignore_ament_install']
+[0.153s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/topfleets/topfleets_coordinator) by extension 'ignore'
+[0.153s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/topfleets/topfleets_coordinator) by extension 'ignore_ament_install'
+[0.153s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/topfleets/topfleets_coordinator) by extensions ['colcon_pkg']
+[0.153s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/topfleets/topfleets_coordinator) by extension 'colcon_pkg'
+[0.153s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/topfleets/topfleets_coordinator) by extensions ['colcon_meta']
+[0.153s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/topfleets/topfleets_coordinator) by extension 'colcon_meta'
+[0.153s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/topfleets/topfleets_coordinator) by extensions ['ros']
+[0.153s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/topfleets/topfleets_coordinator) by extension 'ros'
+[0.153s] DEBUG:colcon.colcon_core.package_identification:Package '/home/jheselden/ros2_ws/src/topfleets/topfleets_coordinator' with type 'ros.ament_python' and name 'topfleets_coordinator'
+[0.154s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/topfleets/topfleets_interaction_manager) by extensions ['ignore', 'ignore_ament_install']
+[0.154s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/topfleets/topfleets_interaction_manager) by extension 'ignore'
+[0.154s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/topfleets/topfleets_interaction_manager) by extension 'ignore_ament_install'
+[0.154s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/topfleets/topfleets_interaction_manager) by extensions ['colcon_pkg']
+[0.154s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/topfleets/topfleets_interaction_manager) by extension 'colcon_pkg'
+[0.154s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/topfleets/topfleets_interaction_manager) by extensions ['colcon_meta']
+[0.154s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/topfleets/topfleets_interaction_manager) by extension 'colcon_meta'
+[0.154s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/topfleets/topfleets_interaction_manager) by extensions ['ros']
+[0.154s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/topfleets/topfleets_interaction_manager) by extension 'ros'
+[0.154s] DEBUG:colcon.colcon_core.package_identification:Package '/home/jheselden/ros2_ws/src/topfleets/topfleets_interaction_manager' with type 'ros.ament_python' and name 'topfleets_interaction_manager'
+[0.154s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/topfleets/topfleets_routing_manager) by extensions ['ignore', 'ignore_ament_install']
+[0.154s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/topfleets/topfleets_routing_manager) by extension 'ignore'
+[0.154s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/topfleets/topfleets_routing_manager) by extension 'ignore_ament_install'
+[0.154s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/topfleets/topfleets_routing_manager) by extensions ['colcon_pkg']
+[0.154s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/topfleets/topfleets_routing_manager) by extension 'colcon_pkg'
+[0.154s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/topfleets/topfleets_routing_manager) by extensions ['colcon_meta']
+[0.154s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/topfleets/topfleets_routing_manager) by extension 'colcon_meta'
+[0.154s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/topfleets/topfleets_routing_manager) by extensions ['ros']
+[0.154s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/topfleets/topfleets_routing_manager) by extension 'ros'
+[0.155s] DEBUG:colcon.colcon_core.package_identification:Package '/home/jheselden/ros2_ws/src/topfleets/topfleets_routing_manager' with type 'ros.ament_python' and name 'topfleets_routing_manager'
+[0.155s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/topological_navigation) by extensions ['ignore', 'ignore_ament_install']
+[0.155s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/topological_navigation) by extension 'ignore'
+[0.155s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/topological_navigation) by extension 'ignore_ament_install'
+[0.155s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/topological_navigation) by extensions ['colcon_pkg']
+[0.155s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/topological_navigation) by extension 'colcon_pkg'
+[0.155s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/topological_navigation) by extensions ['colcon_meta']
+[0.155s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/topological_navigation) by extension 'colcon_meta'
+[0.155s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/topological_navigation) by extensions ['ros']
+[0.155s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/topological_navigation) by extension 'ros'
+[0.155s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/topological_navigation) by extensions ['cmake', 'python']
+[0.155s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/topological_navigation) by extension 'cmake'
+[0.155s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/topological_navigation) by extension 'python'
+[0.155s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/topological_navigation) by extensions ['python_setup_py']
+[0.155s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/topological_navigation) by extension 'python_setup_py'
+[0.155s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/topological_navigation/topological_navigation) by extensions ['ignore', 'ignore_ament_install']
+[0.155s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/topological_navigation/topological_navigation) by extension 'ignore'
+[0.155s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/topological_navigation/topological_navigation) by extension 'ignore_ament_install'
+[0.155s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/topological_navigation/topological_navigation) by extensions ['colcon_pkg']
+[0.155s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/topological_navigation/topological_navigation) by extension 'colcon_pkg'
+[0.155s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/topological_navigation/topological_navigation) by extensions ['colcon_meta']
+[0.155s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/topological_navigation/topological_navigation) by extension 'colcon_meta'
+[0.155s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/topological_navigation/topological_navigation) by extensions ['ros']
+[0.155s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/topological_navigation/topological_navigation) by extension 'ros'
+[0.156s] DEBUG:colcon.colcon_core.package_identification:Package '/home/jheselden/ros2_ws/src/topological_navigation/topological_navigation' with type 'ros.ament_python' and name 'topological_navigation'
+[0.156s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/topological_navigation/topological_navigation_msgs) by extensions ['ignore', 'ignore_ament_install']
+[0.156s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/topological_navigation/topological_navigation_msgs) by extension 'ignore'
+[0.156s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/topological_navigation/topological_navigation_msgs) by extension 'ignore_ament_install'
+[0.156s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/topological_navigation/topological_navigation_msgs) by extensions ['colcon_pkg']
+[0.156s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/topological_navigation/topological_navigation_msgs) by extension 'colcon_pkg'
+[0.156s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/topological_navigation/topological_navigation_msgs) by extensions ['colcon_meta']
+[0.156s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/topological_navigation/topological_navigation_msgs) by extension 'colcon_meta'
+[0.156s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/topological_navigation/topological_navigation_msgs) by extensions ['ros']
+[0.156s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/topological_navigation/topological_navigation_msgs) by extension 'ros'
+[0.157s] DEBUG:colcon.colcon_core.package_identification:Package '/home/jheselden/ros2_ws/src/topological_navigation/topological_navigation_msgs' with type 'ros.ament_cmake' and name 'topological_navigation_msgs'
+[0.157s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/topological_navigation/topological_rviz_tools) by extensions ['ignore', 'ignore_ament_install']
+[0.157s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/topological_navigation/topological_rviz_tools) by extension 'ignore'
+[0.157s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/topological_navigation/topological_rviz_tools) ignored
+[0.157s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/topological_navigation/topological_utils) by extensions ['ignore', 'ignore_ament_install']
+[0.157s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/topological_navigation/topological_utils) by extension 'ignore'
+[0.157s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/topological_navigation/topological_utils) by extension 'ignore_ament_install'
+[0.157s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/topological_navigation/topological_utils) by extensions ['colcon_pkg']
+[0.157s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/topological_navigation/topological_utils) by extension 'colcon_pkg'
+[0.157s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/topological_navigation/topological_utils) by extensions ['colcon_meta']
+[0.157s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/topological_navigation/topological_utils) by extension 'colcon_meta'
+[0.157s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/topological_navigation/topological_utils) by extensions ['ros']
+[0.157s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/topological_navigation/topological_utils) by extension 'ros'
+[0.158s] DEBUG:colcon.colcon_core.package_identification:Package '/home/jheselden/ros2_ws/src/topological_navigation/topological_utils' with type 'ros.ament_python' and name 'topological_utils'
+[0.158s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/vda5050_agent_communication) by extensions ['ignore', 'ignore_ament_install']
+[0.158s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/vda5050_agent_communication) by extension 'ignore'
+[0.158s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/vda5050_agent_communication) by extension 'ignore_ament_install'
+[0.158s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/vda5050_agent_communication) by extensions ['colcon_pkg']
+[0.158s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/vda5050_agent_communication) by extension 'colcon_pkg'
+[0.158s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/vda5050_agent_communication) by extensions ['colcon_meta']
+[0.158s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/vda5050_agent_communication) by extension 'colcon_meta'
+[0.158s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/vda5050_agent_communication) by extensions ['ros']
+[0.158s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/vda5050_agent_communication) by extension 'ros'
+[0.159s] DEBUG:colcon.colcon_core.package_identification:Package '/home/jheselden/ros2_ws/src/vda5050_agent_communication' with type 'ros.ament_python' and name 'vda5050_agent_communication'
+[0.159s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/vrviz_ros) by extensions ['ignore', 'ignore_ament_install']
+[0.159s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/vrviz_ros) by extension 'ignore'
+[0.159s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/vrviz_ros) by extension 'ignore_ament_install'
+[0.159s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/vrviz_ros) by extensions ['colcon_pkg']
+[0.159s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/vrviz_ros) by extension 'colcon_pkg'
+[0.159s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/vrviz_ros) by extensions ['colcon_meta']
+[0.159s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/vrviz_ros) by extension 'colcon_meta'
+[0.159s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/vrviz_ros) by extensions ['ros']
+[0.159s] Level 1:colcon.colcon_core.package_identification:_identify(/home/jheselden/ros2_ws/src/vrviz_ros) by extension 'ros'
+[0.159s] DEBUG:colcon.colcon_core.package_identification:Package '/home/jheselden/ros2_ws/src/vrviz_ros' with type 'ros.ament_python' and name 'vrviz'
+[0.159s] Level 1:colcon.colcon_core.package_discovery:discover_packages(recursive) using defaults
+[0.181s] INFO:colcon.colcon_core.package_selection:Skipping not selected package 'agrifleet_msgs' in '/home/jheselden/ros2_ws/src/agrifleet_msgs'
+[0.181s] INFO:colcon.colcon_core.package_selection:Skipping not selected package 'auto_shepherd_msgs' in '/home/jheselden/ros2_ws/src/auto_shepherd_msgs'
+[0.181s] INFO:colcon.colcon_core.package_selection:Skipping not selected package 'cam_calibration' in '/home/jheselden/ros2_ws/src/cam_calibration'
+[0.181s] INFO:colcon.colcon_core.package_selection:Skipping not selected package 'environment_common' in '/home/jheselden/ros2_ws/src/environment_common'
+[0.181s] INFO:colcon.colcon_core.package_selection:Skipping not selected package 'environment_template' in '/home/jheselden/ros2_ws/src/environment_template'
+[0.181s] INFO:colcon.colcon_core.package_selection:Skipping not selected package 'ffr_sim' in '/home/jheselden/ros2_ws/src/ffr_sim'
+[0.181s] INFO:colcon.colcon_core.package_selection:Skipping not selected package 'ply_publisher' in '/home/jheselden/ros2_ws/src/ply_publisher'
+[0.181s] INFO:colcon.colcon_core.package_selection:Skipping not selected package 'rasberry_coordination_msgs' in '/home/jheselden/ros2_ws/src/rasberry_coordination/msgs'
+[0.181s] INFO:colcon.colcon_core.package_selection:Skipping not selected package 'rasberry_coordination_testing' in '/home/jheselden/ros2_ws/src/rasberry_coordination_evaluations/testing'
+[0.181s] INFO:colcon.colcon_core.package_selection:Skipping not selected package 'stag_ros2' in '/home/jheselden/ros2_ws/src/stag_ros2'
+[0.181s] INFO:colcon.colcon_core.package_selection:Skipping not selected package 'staggered_duckling_platooning' in '/home/jheselden/ros2_ws/src/staggered_duckling_platooning'
+[0.181s] INFO:colcon.colcon_core.package_selection:Skipping not selected package 'topfleets_coordinator' in '/home/jheselden/ros2_ws/src/topfleets/topfleets_coordinator'
+[0.181s] INFO:colcon.colcon_core.package_selection:Skipping not selected package 'topfleets_interaction_manager' in '/home/jheselden/ros2_ws/src/topfleets/topfleets_interaction_manager'
+[0.181s] INFO:colcon.colcon_core.package_selection:Skipping not selected package 'topfleets_routing_manager' in '/home/jheselden/ros2_ws/src/topfleets/topfleets_routing_manager'
+[0.181s] INFO:colcon.colcon_core.package_selection:Skipping not selected package 'topological_navigation_msgs' in '/home/jheselden/ros2_ws/src/topological_navigation/topological_navigation_msgs'
+[0.181s] INFO:colcon.colcon_core.package_selection:Skipping not selected package 'vda5050_agent_communication' in '/home/jheselden/ros2_ws/src/vda5050_agent_communication'
+[0.181s] INFO:colcon.colcon_core.package_selection:Skipping not selected package 'vrviz' in '/home/jheselden/ros2_ws/src/vrviz_ros'
+[0.182s] INFO:colcon.colcon_core.package_selection:Skipping not selected package 'topological_navigation' in '/home/jheselden/ros2_ws/src/topological_navigation/topological_navigation'
+[0.182s] INFO:colcon.colcon_core.package_selection:Skipping not selected package 'topological_utils' in '/home/jheselden/ros2_ws/src/topological_navigation/topological_utils'
+[0.182s] INFO:colcon.colcon_core.package_selection:Skipping not selected package 'rasberry_coordination_core' in '/home/jheselden/ros2_ws/src/rasberry_coordination/core'

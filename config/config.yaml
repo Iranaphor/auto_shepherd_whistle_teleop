@@ -2,7 +2,7 @@ audio_filter:
     input_stream:
         sample_rate: 44100
         chunk_size: 1024
-        window_duration: 5
+        window_duration: 10
         threshold_db: -10
         secondary_threshold_db: -5
         animation_interval: 50
@@ -25,10 +25,30 @@ audio_filter:
             rgb: 'detected/rgb'
             codex: 'detected/pitch_track'
 
+
+
+
+#########################
+template_creator:
+    topics:
+        input:
+            raw: 'stream/raw'
+            save: 'template/save'
+    samples:
+        absolute_dir: ''
+        src_directory_filepath:
+            package: 'auto_shepherd_whistle_teleop'
+            subpath: 'templates_creator/'
+
+
+
+
+#########################
 template_matching:
     topics:
         input:
             raw: 'stream/raw'
+            delay: 3
         output:
             raw: 'labelled/raw'
             rgb: 'labelled/rgb'
@@ -38,27 +58,93 @@ template_matching:
             package: 'auto_shepherd_whistle_teleop'
             subpath: 'templates/'
         details:
-          - action: 'stop'
-            bounding_box_colour: [0,0,255]
-            sensitivity: 0.7
-            sub_directory: 'wolf_whistle/'
+#          - action: 'stop'
+#            bounding_box_colour: [0,0,255]
+#            sensitivity: 0.5
+#            sub_directory: 'wolf_whistle/'
+#          - action: 'forward'
+#            bounding_box_colour: [0,255,255]
+#            sensitivity: 0.5
+#            sub_directory: 'good_bad_ugly/'
+#          - action: 'backward'
+#            bounding_box_colour: [0,255,0]
+#            sensitivity: 0.5
+#            sub_directory: 'hill_slope/'
+#          - action: 'right'
+#            bounding_box_colour: [255,0,255]
+#            sensitivity: 0.5
+#            sub_directory: 'woody/'
+#          - action: 'left'
+#            bounding_box_colour: [255,255,0]
+#            sensitivity: 0.5
+#            sub_directory: '4_wide_invert_siren/'
 
-          - action: 'forward'
-            bounding_box_colour: [0,255,255]
-            sensitivity: 0.7
+
+#          - action: '4_wide_invert_siren'
+#            bounding_box_colour: [255,0,0]
+#            sensitivity: 0.5
+#            sub_directory: '4_wide_invert_siren/'
+#          - action: 'andy_griffith'
+#            bounding_box_colour: [255,0,0]
+#            sensitivity: 0.5
+#            sub_directory: 'andy_griffith/'
+#          - action: 'charge'
+#            bounding_box_colour: [255,0,0]
+#            sensitivity: 0.5
+#            sub_directory: 'charge/'
+#          - action: 'double_hill_slope'
+#            bounding_box_colour: [255,0,0]
+#            sensitivity: 0.5
+#            sub_directory: 'double_hill_slope/'
+          - action: 'good_bad_ugly'
+            bounding_box_colour: [255,0,0]
+            sensitivity: 0.5
             sub_directory: 'good_bad_ugly/'
-
-          - action: 'backward'
-            bounding_box_colour: [0,255,0]
-            sensitivity: 0.7
-            sub_directory: 'hill_slope/'
-
-          - action: 'left'
-            bounding_box_colour: [255,0,255]
-            sensitivity: 0.7
-            sub_directory: 'woody/'
-
-          - action: 'right'
-            bounding_box_colour: [255,255,0]
-            sensitivity: 0.7
-            sub_directory: '4_wide_invert_siren/'
+#          - action: 'hill_slope'
+#            bounding_box_colour: [255,0,0]
+#            sensitivity: 0.5
+#            sub_directory: 'hill_slope/'
+          - action: 'jigglypuff'
+            bounding_box_colour: [255,0,0]
+            sensitivity: 0.5
+            sub_directory: 'jigglypuff/'
+#          - action: 'mario'
+#            bounding_box_colour: [255,0,0]
+#            sensitivity: 0.5
+#            sub_directory: 'mario/'
+#          - action: 'N'
+#            bounding_box_colour: [255,0,0]
+#            sensitivity: 0.5
+#            sub_directory: 'N/'
+#          - action: 'shave_and_a_haircut'
+#            bounding_box_colour: [255,0,0]
+#            sensitivity: 0.5
+#            sub_directory: 'shave_and_a_haircut/'
+          - action: 'the_river_kwai_march'
+            bounding_box_colour: [255,0,0]
+            sensitivity: 0.5
+            sub_directory: 'the_river_kwai_march/'
+#          - action: 'twisted_nerve'
+#            bounding_box_colour: [255,0,0]
+#            sensitivity: 0.5
+#            sub_directory: 'twisted_nerve/'
+#          - action: 'wii_fit_obese'
+#            bounding_box_colour: [255,0,0]
+#            sensitivity: 0.5
+#            sub_directory: 'wii_fit_obese/'
+#          - action: 'wolf_whistle'
+#            bounding_box_colour: [255,0,0]
+#            sensitivity: 0.5
+#            sub_directory: 'wolf_whistle/'
+#          - action: 'woody'
+#            bounding_box_colour: [255,0,0]
+#            sensitivity: 0.5
+#            sub_directory: 'woody/'
+#          - action: 'zelda_item'
+#            bounding_box_colour: [255,0,0]
+#            sensitivity: 0.5
+#            sub_directory: 'zelda_item/'
+          - action: 'zelda_main_theme'
+            bounding_box_colour: [255,0,0]
+            sensitivity: 0.5
+            sub_directory: 'zelda_main_theme/'

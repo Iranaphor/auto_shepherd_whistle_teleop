@@ -117,6 +117,10 @@ class RealTimeSpectrogram:
         #                     linestyle='-', color='red', markersize=5)
 
         # Format datastream
+        header = Header()
+        header.stamp = self.node.get_clock().now().to_msg()
+        header.frame_id = "spectrogram"
+
         viridis = plt.get_cmap('viridis')
         min_val = self.normalize_min
         max_val = self.normalize_max
@@ -130,8 +134,10 @@ class RealTimeSpectrogram:
 
         # Convert to ROS2 Image and publish
         ros_image = self.bridge.cv2_to_imgmsg(normalized_spectrogram_uint8, encoding="mono8")
+        ros_image.header = header
         self.image_stream_raw.publish(ros_image)
         ros_image = self.bridge.cv2_to_imgmsg(colored_spectrogram, encoding="rgb8")
+        ros_image.header = header
         self.image_stream_rgb.publish(ros_image)
 
         # Only proceed if activity detection is enabled
@@ -161,10 +167,7 @@ class RealTimeSpectrogram:
 
             # --- Build and Publish the PitchTrack message ---
             pt = PitchTrack()
-            now = self.node.get_clock().now().to_msg()
-            pt.header = Header()
-            pt.header.stamp = now
-            pt.header.frame_id = "spectrogram"
+            pt.header = header
 
             # Create a Time message representing the duration of the event
             duration_time = RosTime()
@@ -216,8 +219,10 @@ class RealTimeSpectrogram:
 
             # Convert to ROS2 Image and publish
             ros_image = self.bridge.cv2_to_imgmsg(normalized_spectrogram_uint8, encoding="mono8")
+            ros_image.header = header
             self.image_pub_raw.publish(ros_image)
             ros_image = self.bridge.cv2_to_imgmsg(colored_spectrogram, encoding="rgb8")
+            ros_image.header = header
             self.image_pub_rgb.publish(ros_image)
 
             self.recording = False
