@@ -1,3 +1,15 @@
+audio_input:
+    input_stream:
+        sample_rate: 44100
+        chunk_size: 1024
+        window_duration: 10
+    topics:
+        input:
+            filepath: 'input/filepath'
+        output:
+            audio: 'input/audio'
+
+#########################
 audio_filter:
     input_stream:
         sample_rate: 44100

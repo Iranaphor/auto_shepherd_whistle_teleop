@@ -33,6 +33,7 @@ setup(
     license='TODO: License declaration',
     entry_points={
         'console_scripts': [
+            'audio_input.py = auto_shepherd_whistle_teleop.audio_input:main',
             'audio_filter.py = auto_shepherd_whistle_teleop.audio_filter:main',
             'pitch_decoder.py = auto_shepherd_whistle_teleop.pitch_decoder:main',
             'template_creator.py = auto_shepherd_whistle_teleop.template_creator:main',

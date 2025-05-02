@@ -14,7 +14,7 @@ from matplotlib.animation import FuncAnimation
 from scipy.signal import medfilt
 
 # Import message types
-from auto_shepherd_msgs.msg import PitchTrack, SpectralPeak
+from auto_shepherd_msgs.msg import PitchTrack, SpectralPeak, AudioChunk
 from std_msgs.msg import Header, Float32
 from sensor_msgs.msg import Image
 from builtin_interfaces.msg import Time as RosTime
@@ -36,15 +36,13 @@ class RealTimeSpectrogram:
 
         # Audio and display parameters
         self.config = config
+
+       # Audio and display parameters
         i = self.config['audio_filter']['input_stream']
         p = self.config['audio_filter']['preprocessing']
         a = self.config['audio_filter']['activity_detection']
 
-        # Save input stream properties
-        self.sample_rate = i['sample_rate']
-        self.chunk_size = i['chunk_size']
-        self.window_duration = i['window_duration']
-        self.num_chunks = int(i['window_duration'] * i['sample_rate'] / i['chunk_size'])
+        # Setup preprocessing details
         self.threshold_db = i['threshold_db']
         self.secondary_threshold_db = i['secondary_threshold_db']
         self.animation_interval = i['animation_interval']
@@ -57,18 +55,13 @@ class RealTimeSpectrogram:
         self.frequency_min = p['frequency_min']
         self.frequency_max = p['frequency_max']
 
-
         # Save activity detection properties
         self.run_activity_detection = a['run']
         self.record_duration = a['record_duration']
 
-        # Compute full FFT frequency bins and create frequency mask (500-5000 Hz)
-        full_freqs = np.fft.rfftfreq(self.chunk_size, d=1/self.sample_rate)
-        self.freq_mask = (full_freqs >= self.frequency_min) & (full_freqs <= self.frequency_max)
-        self.trimmed_freqs = full_freqs[self.freq_mask]
-
-        # Initialize spectrogram buffer (rows: time slices, columns: frequency bins)
-        self.spectrogram = np.zeros((self.num_chunks, len(self.trimmed_freqs)))
+        # Setup audio input details
+        self.pause = True
+        self.resume_mic()
 
         # Event detection variables
         self.recording = False
@@ -79,8 +72,56 @@ class RealTimeSpectrogram:
             self.fig, self.ax = plt.subplots(figsize=(10, 6))
             self.ani = FuncAnimation(self.fig, self.update, interval=self.animation_interval, blit=False)
 
+    def pause_mic(self, msg):
+        if not self.pause:
+            self.pause = True
+            print('mic paused')
+
+            # Audio and display parameters
+            i = self.config['audio_filter']['input_stream']
+
+            # Save input stream properties
+            self.sample_rate = msg.sample_rate
+            self.chunk_size = msg.frames
+            self.window_duration = i['window_duration']
+            self.num_chunks = int(i['window_duration'] * self.sample_rate / self.chunk_size)
+
+            # Compute full FFT frequency bins and create frequency mask (500-5000 Hz)
+            full_freqs = np.fft.rfftfreq(self.chunk_size, d=1/self.sample_rate)
+            self.freq_mask = (full_freqs >= self.frequency_min) & (full_freqs <= self.frequency_max)
+            self.trimmed_freqs = full_freqs[self.freq_mask]
+
+            # Initialize spectrogram buffer (rows: time slices, columns: frequency bins)
+            self.spectrogram = np.zeros((self.num_chunks, len(self.trimmed_freqs)))
+
+    def resume_mic(self):
+        if self.pause:
+            # Audio and display parameters
+            i = self.config['audio_filter']['input_stream']
+            # Save input stream properties
+            self.sample_rate = i['sample_rate']
+            self.chunk_size = i['chunk_size']
+            self.window_duration = i['window_duration']
+            self.num_chunks = int(i['window_duration'] * i['sample_rate'] / i['chunk_size'])
+
+            # Compute full FFT frequency bins and create frequency mask (500-5000 Hz)
+            full_freqs = np.fft.rfftfreq(self.chunk_size, d=1/self.sample_rate)
+            self.freq_mask = (full_freqs >= self.frequency_min) & (full_freqs <= self.frequency_max)
+            self.trimmed_freqs = full_freqs[self.freq_mask]
+
+            # Initialize spectrogram buffer (rows: time slices, columns: frequency bins)
+            self.spectrogram = np.zeros((self.num_chunks, len(self.trimmed_freqs)))
+
+            self.pause = False
+            print('mic resumed')
+
+
     def audio_callback(self, indata, frames, time_info, status):
-        if status:
+        # Called in the background by the while loop in self.start()
+        if self.pause:
+            if status != "from_file":
+                return
+        elif status:
             self.node.get_logger().warning(str(status))
         # Process mono audio
         audio_data = indata[:, 0]
@@ -92,6 +133,7 @@ class RealTimeSpectrogram:
         # Roll the spectrogram buffer and append the new data
         self.spectrogram[:-1, :] = self.spectrogram[1:, :]
         self.spectrogram[-1, :] = fft_data_trimmed
+
 
     def update(self, frame=0):
         # Compute time axis for each time slice
@@ -257,6 +299,15 @@ class RealTimeSpectrogramNode(Node):
         with open(self.config_file) as f:
             self.config = yaml.safe_load(f)
         t = self.config['audio_filter']['topics']
+        i = self.config['audio_input']['topics']
+
+        # Subscriber for incoming audio from input node
+        self.subscription = self.create_subscription(
+            AudioChunk,
+            i['output']['audio'],
+            self.audio_input_cb,
+            10
+        )
 
         # Publisher for live spectrogram
         self.image_stream_raw = self.create_publisher(
@@ -311,6 +362,26 @@ class RealTimeSpectrogramNode(Node):
             reliability=QoSReliabilityPolicy.RELIABLE,
             durability=QoSDurabilityPolicy.VOLATILE
         )
+
+    def audio_input_cb(self, msg):
+        #print(len(msg.data), msg.frames, msg.channels, msg.sample_rate)
+        if not msg.data:
+            self.spectro.resume_mic()
+            return
+        if not self.spectro.pause:
+            self.spectro.pause_mic(msg)
+
+        # Called as callback from audio_input.py
+        indata = np.asarray(msg.data, dtype=np.float32)\
+                    .reshape((msg.frames, msg.channels))
+        frames = msg.frames
+        # fabricate minimal time_info / status if you need them
+        time_info = {'input_buffer_adc_time': msg.header.stamp.sec +
+                                             msg.header.stamp.nanosec * 1e-9}
+        status = "from_file"
+
+        self.spectro.audio_callback(indata, frames, time_info, status)
+
 
 def main():
     rclpy.init()
