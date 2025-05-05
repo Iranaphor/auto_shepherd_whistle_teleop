@@ -59,10 +59,10 @@ codex_detector:
         input:
             raw: 'preprocessed/raw'
         output:
-            codex: 'detected/pitch_track'
+            codex: 'codex/pitch_track'
         visual:
-            raw: 'detected/raw_img'
-            rgb: 'detected/rgb_img'
+            raw: 'codex/raw_img'
+            rgb: 'codex/rgb_img'
 
 
 #########################
@@ -82,27 +82,17 @@ template_creator:
 
 #########################
 template_matching:
-#    topics:
-#        input:
-#            audio: 'input/audio'        #auto_shepherd_msgs/AudioChunk
-#        output:
-#            raw: 'preprocessed/raw'     #auto_shepherd_msgs/Spectrogram
-#        visual:
-#            st_raw: 'stream/raw_img'       #sensor_msgs/Image
-#            st_rgb: 'stream/rgb_img'       #sensor_msgs/Image
-#            pr_raw: 'preprocessed/raw_img' #sensor_msgs/Image
-#            pr_rgb: 'preprocessed/rgb_img' #sensor_msgs/Image
     topics:
         input:
-            raw: 'preprocessed/raw'      #auto_shepherd_msgs/Spectrogram
-            delay: 3
+            raw: 'preprocessed/raw'  #auto_shepherd_msgs/Spectrogram
         output:
-            raw: 'labelled/'
-
+            raw: 'detected/labels'   #auto_shepherd_msgs/SpectrogramClassification
         visual:
-            raw: 'labelled/raw'
-            rgb: 'labelled/rgb'
-            class: 'labelled/classfied_spectrogram'
+            raw: 'detected/raw_bounds'  #sensor_msgs/Image
+            rgb: 'detected/rgb_bounds'  #sensor_msgs/Image
+    options:
+        input_delay: 3
+        draw_style: 'all' #best, group_best, all
     samples:
         absolute_dir: ''
         share_directory_filepath:

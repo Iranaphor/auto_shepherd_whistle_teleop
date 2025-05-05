@@ -50,7 +50,7 @@ class RealTimeSpectrogram(Node):
         self.create_subscription(AudioChunk, p['input']['audio'], self.audio_input_cb, 10)
 
         # Publisher for spectrogram (raw)
-        self.pub_raw_spectrogram = self.create_publisher(Spectrogram, p['output']['raw'], self.get_image_qos())
+        self.spectrogram_pub = self.create_publisher(Spectrogram, p['output']['raw'], self.get_image_qos())
 
         # Publishers for stream (raw/rgb)
         self.image_stream_raw = self.create_publisher(Image, p['visual']['st_raw'], self.get_image_qos())
@@ -60,8 +60,11 @@ class RealTimeSpectrogram(Node):
         self.image_preprocessed_raw = self.create_publisher(Image, p['visual']['pr_raw'], self.get_image_qos())
         self.image_preprocessed_rgb = self.create_publisher(Image, p['visual']['pr_rgb'], self.get_image_qos())
 
-        # Publisher for detected activity (codex)
+        # Publisher for detected activity (codex, raw/rgb)
         self.pitch_pub = self.create_publisher(PitchTrack, c['output']['codex'], self.get_qos())
+        self.image_codex_raw = self.create_publisher(Image, c['visual']['raw'], self.get_image_qos())
+        self.image_codex_rgb = self.create_publisher(Image, c['visual']['rgb'], self.get_image_qos())
+
 
         # --------------------------------------------------
         # 3.  Spectrogram processing parameters
@@ -71,6 +74,9 @@ class RealTimeSpectrogram(Node):
         # Audio and display parameters
         p_conf = self.config['audio_preprocessor']['preprocessing']
         c_conf = self.config['codex_detector']['activity_detection']
+
+        # Declare colour format for rgb
+        self.viridis = plt.get_cmap('viridis')
 
         # Setup preprocessing details
         self.threshold_db = p_conf['threshold_db']
@@ -136,7 +142,6 @@ class RealTimeSpectrogram(Node):
     #                 CALLBACKS / HELPERS
     # ======================================================
     def audio_input_cb(self, msg):
-        print("audio input cb")
         #print(len(msg.data), msg.frames, msg.channels, msg.sample_rate)
         if not msg.data:          # ignore “flush-empty” message
             return
@@ -193,7 +198,6 @@ class RealTimeSpectrogram(Node):
     # Core: process incoming chunk
     # ──────────────────────────────────────────────────────────────────────────
     def audio_callback(self, indata, frames, time_info, status):
-        print("audio callback")
         # Process mono audio
         audio_data = indata[:, 0]
         windowed = audio_data * np.hanning(len(audio_data))
@@ -208,6 +212,34 @@ class RealTimeSpectrogram(Node):
         self.spectrogram[:-1, :] = self.spectrogram[1:, :]
         self.spectrogram[-1, :] = fft_data_trimmed
 
+
+    def publish_raw_and_rgb(self, img, raw_pub, rgb_pub, header):
+        # Apply colour and format as uint8
+        colored = self.viridis(img)[:, :, :3]
+        colored = (colored * 255).astype(np.uint8)
+
+        # Convert to Image and publish Raw
+        ros_image = self.bridge.cv2_to_imgmsg(img.astype(np.uint8), encoding="mono8")
+        ros_image.header = header
+        raw_pub.publish(ros_image)
+
+        # Convert to Image and publish RGB
+        ros_image = self.bridge.cv2_to_imgmsg(colored, encoding="rgb8")
+        ros_image.header = header
+        rgb_pub.publish(ros_image)
+
+    def publish_spectrogram(self, img, header, sample_rate, chunk_size):
+        S = Spectrogram()
+        # Load Image
+        S.raw_spectrogram = self.bridge.cv2_to_imgmsg(img.astype(np.uint8), encoding="mono8")
+        S.raw_spectrogram.header = header
+        # Load properties
+        S.window_duration = float(self.window_duration) #from config file
+        S.sample_rate     = sample_rate          #from audio source
+        S.chunk_size      = chunk_size           #from audio source
+        # Publish
+        self.spectrogram_pub.publish(S)
+
     # ──────────────────────────────────────────────────────────────────────────
     # Timer-driven update:  visualisation + event detection
     # ──────────────────────────────────────────────────────────────────────────
@@ -215,53 +247,45 @@ class RealTimeSpectrogram(Node):
         if not self.initialised:
             return
 
-        # Compute time axis for each time slice
-        times = np.linspace(0, self.window_duration, self.num_chunks)
-        max_values = np.max(self.spectrogram, axis=1)
-        max_indices = np.argmax(self.spectrogram, axis=1)
-        max_freqs = self.trimmed_freqs[max_indices]
-        filtered_max_freqs = medfilt(max_freqs, kernel_size=self.medfilt_kernel)
-        filtered_max_freqs = np.where(filtered_max_freqs == np.min(filtered_max_freqs),
-                                      np.nan, filtered_max_freqs)
-
         # Format datastream
         header = Header()
         header.stamp = self.get_clock().now().to_msg()
         header.frame_id = "spectrogram"
 
-        viridis = plt.get_cmap('viridis')
-        min_val = self.normalize_min
-        max_val = self.normalize_max
+        # Publish input stream
+        self.publish_raw_and_rgb(np.flipud(self.spectrogram.T), self.image_stream_raw, self.image_stream_rgb, header)
+
+        # Perform medfilt
+        max_values = np.max(self.spectrogram, axis=1)
+        max_indices = np.argmax(self.spectrogram, axis=1)
+        max_freqs = self.trimmed_freqs[max_indices]
+        filtered_max_freqs = medfilt(max_freqs, kernel_size=self.medfilt_kernel)
+        filtered_max_freqs = np.where(filtered_max_freqs == np.min(filtered_max_freqs), np.nan, filtered_max_freqs)
 
         # Perform min-max normalization
+        min_val = self.normalize_min
+        max_val = self.normalize_max
         if self.normalize_do:
             normalized_spectrogram = (np.flipud(self.spectrogram.T)
                                       - min_val) / (max_val - min_val)
         else:
             normalized_spectrogram = np.flipud(self.spectrogram.T)
-        normalized_spectrogram_uint8 = (normalized_spectrogram * 255).astype(np.uint8)
 
-        colored_spectrogram = viridis(normalized_spectrogram)[:, :, :3]  # Exclude the alpha channel
-        colored_spectrogram = (colored_spectrogram * 255).astype(np.uint8)
+        # Publish preprocessed stream
+        self.publish_raw_and_rgb(normalized_spectrogram, self.image_preprocessed_raw, self.image_preprocessed_rgb, header)
+        self.publish_spectrogram(normalized_spectrogram, header, self.sample_rate, self.chunk_size)
 
-        # Convert to ROS2 Image and publish
-        ros_image = self.bridge.cv2_to_imgmsg(normalized_spectrogram_uint8, encoding="mono8")
-        ros_image.header = header
-        self.image_stream_raw.publish(ros_image)
-        ros_image = self.bridge.cv2_to_imgmsg(colored_spectrogram, encoding="rgb8")
-        ros_image.header = header
-        self.image_stream_rgb.publish(ros_image)
+        # Activity detection & PitchTrack
+        self._activity_detection(header, max_values, filtered_max_freqs)
 
-
-        # ── Activity detection & PitchTrack ------------------------------
-        self._activity_detection(header, times, max_values, filtered_max_freqs)
-
-    def _activity_detection(self, header, times,
-                            max_values, filtered_max_freqs):
+    def _activity_detection(self, header, max_values, filtered_max_freqs):
         """Detect whistle events and, if complete, publish a PitchTrack."""
         # Only proceed if activity detection is enabled
         if not self.run_activity_detection:
             return
+
+        # Compute time axis for each time slice
+        times = np.linspace(0, self.window_duration, self.num_chunks)
 
         current_marker = filtered_max_freqs[-1]
         current_time = time.time()  # Absolute current time in seconds
@@ -335,12 +359,17 @@ class RealTimeSpectrogram(Node):
                     cv2.circle(colored, (x, y),
                                radius=2, color=(255, 0, 0), thickness=1)
 
-            ros_img = self.bridge.cv2_to_imgmsg(normalized_uint8, encoding="mono8")
-            ros_img.header = header
-            self.image_preprocessed_raw.publish(ros_img)
-            ros_img = self.bridge.cv2_to_imgmsg(colored, encoding="rgb8")
-            ros_img.header = header
-            self.image_preprocessed_rgb.publish(ros_img)
+
+            # Publish input stream
+            self.publish_raw_and_rgb(np.flipud(self.spectrogram.T), self.image_codex_raw, self.image_codex_rgb, header)
+
+            # Publish images marked with codex
+            #ros_img = self.bridge.cv2_to_imgmsg(normalized_uint8, encoding="mono8")
+            #ros_img.header = header
+            #self.image_codex_raw.publish(ros_img)
+            #ros_img = self.bridge.cv2_to_imgmsg(colored, encoding="rgb8")
+            #ros_img.header = header
+            #self.image_codex_rgb.publish(ros_img)
 
             self.recording = False
             self.record_start_time = None

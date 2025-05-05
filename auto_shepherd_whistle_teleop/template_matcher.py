@@ -11,6 +11,8 @@ import rclpy
 from rclpy.node import Node
 
 from sensor_msgs.msg import Image
+from vision_msgs.msg import Detection2DArray
+from auto_shepherd_msgs.msg import Spectrogram, SpectrogramClassification
 
 
 class ImageTemplateMatcher(Node):
@@ -22,33 +24,27 @@ class ImageTemplateMatcher(Node):
         self.config_file = os.getenv('WHISTLE_CONF')
         with open(self.config_file) as f:
             self.config = yaml.safe_load(f)
-        topics = self.config['template_matching']['topics']
-        samples = self.config['template_matching']['samples']
+        t = self.config['template_matching']['topics']
+        s = self.config['template_matching']['samples']
+        o = self.config['template_matching']['options']
 
         # Load template samples
-        self.templates = self.load_templates(samples)
+        self.templates = self.load_templates(s)
 
         # Subscriber for incoming images on /pitch_img
-        self.subscription = self.create_subscription(
-            Image,
-            topics['input']['raw'],
-            self.image_callback,
-            10
-        )
-        self.input_delay = topics['input']['delay']
+        self.subscription = self.create_subscription(Spectrogram, t['input']['raw'], self.image_callback, 10)
         self.last_message_secs = 0
 
         # Publisher for annotated images on labelled_pitch_image
-        self.labelled_image_pub_raw = self.create_publisher(
-            Image,
-            topics['output']['raw'],
-            10
-        )
-        self.labelled_image_pub_rgb = self.create_publisher(
-            Image,
-            topics['output']['rgb'],
-            10
-        )
+        self.detected_labels_pub = self.create_publisher(SpectrogramClassification, t['output']['raw'], 10)
+
+        # Publisher for annotated images on labelled_pitch_image
+        self.labelled_image_pub_raw = self.create_publisher(Image, t['visual']['raw'], 10)
+        self.labelled_image_pub_rgb = self.create_publisher(Image, t['visual']['rgb'], 10)
+
+        # Define extra options
+        self.input_delay = o['input_delay'] # delay between inputs (no need to process every image)
+        self.draw_style = o['draw_style'] # str to define if every group best is drawn or only the best or all
 
         self.get_logger().info('Image Template Matcher Node initialized.')
 
@@ -124,19 +120,19 @@ class ImageTemplateMatcher(Node):
         #print(msg.header.stamp.sec)
 
         if self.last_message_secs == 0:
-            #print('first')
+            print('first')
             pass
         elif msg.header.stamp.sec - self.input_delay > self.last_message_secs:
-            #print('go')
+            print('go')
             pass
         else:
-            #print('skip')
+            print('skip')
             return
-        self.last_message_secs = msg.header.stamp.sec
+        self.last_message_secs = msg.raw_spectrogram.header.stamp.sec
 
         try:
             # Convert the ROS Image message to an OpenCV BGR image
-            cv_image = self.bridge.imgmsg_to_cv2(msg, desired_encoding='mono8')
+            cv_image = self.bridge.imgmsg_to_cv2(msg.raw_spectrogram, desired_encoding='mono8')
             cv_image_raw = cv2.cvtColor(cv_image, cv2.COLOR_GRAY2RGB)
 
             # Format rgb datastream
@@ -145,13 +141,13 @@ class ImageTemplateMatcher(Node):
             cv_image_rgb = (cv_image_rgb * 255).astype(np.uint8)
             cv_image_rgb = cv2.cvtColor(cv_image_rgb, cv2.COLOR_RGB2BGR)
 
-            # Convert to grayscale for matching
-            # gray_image = cv2.medianBlur(gray_image, 5)
-
+            # Define storage for bounding boxes of detections
+            detection_array = Detection2DArray()
+            detection_array.header = msg.raw_spectrogram.header
             best_from_all = {'bv': 0, 'best_scale':None, 'best_val':None,
                              'txt':None, 'text_position':None, 'best_loc':None,
                              'w':None, 'h':None, 'templ':None, 'bounding_box_colour':None}
-
+            print('loop templates now')
             # For each template, perform multi-scale matching and draw bounding boxes if matched
             for tmpl in self.templates:
                 action = tmpl['action']
@@ -162,14 +158,14 @@ class ImageTemplateMatcher(Node):
                 template = tmpl['image']
 
                 # Identidfy rows that cover range
-                nyquist = self.sample_rate / 2.0
+                nyquist = msg.sample_rate / 2.0
                 img_h = cv_image_raw.shape[0]
 
                 def freq_to_row(f_hz):
                     """0 Hz is at the *bottom* of the image; flip if yours is top-origin."""
                     return int(round((1.0 - f_hz / nyquist) * (img_h - 1)))
-                row_top    = min(freq_to_row(freq_max), freq_to_row(freq_min))
-                row_bottom = max(freq_to_row(freq_max), freq_to_row(freq_min))
+                row_top    = min(freq_to_row(frequency_range_max), freq_to_row(frequency_range_min))
+                row_bottom = max(freq_to_row(frequency_range_max), freq_to_row(frequency_range_min))
                 roi = cv_image_raw[row_top:row_bottom + 1, :]
 
                 # Loop through each size to try for detection
@@ -195,26 +191,6 @@ class ImageTemplateMatcher(Node):
                 best_loc_global = (best_loc_roi[0], best_loc_roi[1] + row_top)
 
 
-
-                """
-                # Try matching over a range of scales (e.g., 0.5 to 1.5 times the template size)
-                for scale_x in np.linspace(0.15, 1.0, 10):
-                    for scale_y in np.linspace(0.15, 1.0, 10):
-                        resized_template = cv2.resize(template, None, fx=scale_x, fy=scale_y, interpolation=cv2.INTER_AREA)
-                        # Skip if the template is larger than the image
-                        if resized_template.shape[0] > cv_image_raw.shape[0] or resized_template.shape[1] > cv_image_raw.shape[1]:
-                            continue
-                        result = cv2.matchTemplate(cv_image, resized_template, cv2.TM_CCOEFF_NORMED)
-                        total_attempts += 1
-                        min_val, max_val, min_loc, max_loc = cv2.minMaxLoc(result)
-                        if max_val > best_val:
-                            best_val = max_val
-                            best_loc = max_loc
-                            best_scale_x = scale_x
-                            best_scale_y = scale_y
-                            best_resized_template = resized_template
-                """
-
                 # If the best match exceeds the sensitivity threshold, draw the bounding box and log the action
                 if best_val >= sensitivity:
                     bs = f'{best_scale_x:.2f}x{best_scale_y:.2f}'
@@ -223,16 +199,54 @@ class ImageTemplateMatcher(Node):
                     w, h = best_resized_template.shape[::-1]
                     text_position = (best_loc[0], best_loc[1] - 10 if best_loc[1] - 10 > 10 else best_loc[1] + 10)
                     txt = f"{action} {round(best_val,2)}"
-                    # Draw to mono image
-                    #cv2.rectangle(cv_image_raw, best_loc, (best_loc[0] + w, best_loc[1] + h), bounding_box_colour, 2)
-                    #cv2.putText(cv_image_raw, txt, text_position, cv2.FONT_HERSHEY_SIMPLEX, 0.4, bounding_box_colour, 1)
-                    # Draw to rgb image
-                    #cv2.rectangle(cv_image_rgb, best_loc, (best_loc[0] + w, best_loc[1] + h), bounding_box_colour, 2)
-                    #cv2.putText(cv_image_rgb, txt, text_position, cv2.FONT_HERSHEY_SIMPLEX, 0.4, bounding_box_colour, 1)
+
+                    # Draw detected regions
+                    if self.draw_style == 'all':
+                        # Draw to mono image
+                        cv2.rectangle(cv_image_raw, best_loc, (best_loc[0] + w, best_loc[1] + h), bounding_box_colour, 2)
+                        cv2.putText(cv_image_raw, txt, text_position, cv2.FONT_HERSHEY_SIMPLEX, 0.4, bounding_box_colour, 1)
+                        # Draw to rgb image
+                        cv2.rectangle(cv_image_rgb, best_loc, (best_loc[0] + w, best_loc[1] + h), bounding_box_colour, 2)
+                        cv2.putText(cv_image_rgb, txt, text_position, cv2.FONT_HERSHEY_SIMPLEX, 0.4, bounding_box_colour, 1)
+                        # Add bounding boxes to detection array
+                        detection_2d = Detection2D()
+                        detection_2d.bbox.centre.position.x = best_loc[0]+int(w/2)
+                        detection_2d.bbox.centre.position.y = best_loc[1]+int(h/2)
+                        detection_2d.bbox.size_x = w
+                        detection_2d.bbox.size_y = h
+                        detection_2d.results.hypothesis.class_id = action
+                        detection_2d.results.hypothesis.score = bv
+                        detection_array.append(detection_2d)
+
+
+                    # Identify best detection from set to save
                     if best_val > best_from_all['bv']:
-                         best_from_all = {'bv':best_val, 'best_scale':bs, 'best_val':bv, 'txt': txt, 'text_position': text_position, 'best_loc': best_loc, 'w':w, 'h':h, 'tmpl':tmpl, 'bounding_box_colour': bounding_box_colour, 'action':action}
+                         best_from_all = {'bv':best_val, 'best_scale':bs, 'best_val':bv,
+                                          'txt': txt, 'text_position': text_position, 'best_loc': best_loc,
+                                          'w':w, 'h':h, 'tmpl':tmpl, 'bounding_box_colour': bounding_box_colour,
+                                          'action':action}
                 else:
                     self.get_logger().debug(f'No match for {tmpl["file"]} (best score: {best_val:.2f})')
+
+            """ Make this draw the best from each group
+            # Draw best detected region
+            if self.draw_style == 'best':
+                # Draw to mono image
+                cv2.rectangle(cv_image_raw, best_loc, (best_loc[0] + w, best_loc[1] + h), bounding_box_colour, 2)
+                cv2.putText(cv_image_raw, txt, text_position, cv2.FONT_HERSHEY_SIMPLEX, 0.4, bounding_box_colour, 1)
+                # Draw to rgb image
+                cv2.rectangle(cv_image_rgb, best_loc, (best_loc[0] + w, best_loc[1] + h), bounding_box_colour, 2)
+                cv2.putText(cv_image_rgb, txt, text_position, cv2.FONT_HERSHEY_SIMPLEX, 0.4, bounding_box_colour, 1)
+                # Add bounding boxes to detection array
+                detection_2d = Detection2D()
+                detection_2d.bbox.centre.position.x = best_loc[0]+int(w/2)
+                detection_2d.bbox.centre.position.y = best_loc[1]+int(h/2)
+                detection_2d.bbox.size_x = w
+                detection_2d.bbox.size_y = h
+                detection_2d.results.hypothesis.class_id = action
+                detection_2d.results.hypothesis.score = bv
+                detection_array.append(detection_2d)
+            """
 
 
             # If the best match exceeds the sensitivity threshold, draw the bounding box and log the action
@@ -246,18 +260,36 @@ class ImageTemplateMatcher(Node):
                 text_position = best_from_all['text_position']
                 txt = best_from_all['txt']
                 bounding_box_colour = best_from_all['bounding_box_colour']
-                # Draw to mono image
-                cv2.rectangle(cv_image_raw, best_loc, (best_loc[0] + w, best_loc[1] + h), bounding_box_colour, 2)
-                cv2.putText(cv_image_raw, txt, text_position, cv2.FONT_HERSHEY_SIMPLEX, 0.4, bounding_box_colour, 1)
-                # Draw to rgb image
-                cv2.rectangle(cv_image_rgb, best_loc, (best_loc[0] + w, best_loc[1] + h), bounding_box_colour, 2)
-                cv2.putText(cv_image_rgb, txt, text_position, cv2.FONT_HERSHEY_SIMPLEX, 0.4, bounding_box_colour, 1)
+
+                # Draw best detected region
+                if self.draw_style == 'best':
+                    # Draw to mono image
+                    cv2.rectangle(cv_image_raw, best_loc, (best_loc[0] + w, best_loc[1] + h), bounding_box_colour, 2)
+                    cv2.putText(cv_image_raw, txt, text_position, cv2.FONT_HERSHEY_SIMPLEX, 0.4, bounding_box_colour, 1)
+                    # Draw to rgb image
+                    cv2.rectangle(cv_image_rgb, best_loc, (best_loc[0] + w, best_loc[1] + h), bounding_box_colour, 2)
+                    cv2.putText(cv_image_rgb, txt, text_position, cv2.FONT_HERSHEY_SIMPLEX, 0.4, bounding_box_colour, 1)
+                    # Add bounding boxes to detection array
+                    detection_2d = Detection2D()
+                    detection_2d.bbox.centre.position.x = best_loc[0]+int(w/2)
+                    detection_2d.bbox.centre.position.y = best_loc[1]+int(h/2)
+                    detection_2d.bbox.size_x = w
+                    detection_2d.bbox.size_y = h
+                    detection_2d.results.hypothesis.class_id = action
+                    detection_2d.results.hypothesis.score = bv
+                    detection_array.append(detection_2d)
 
             # Publish the annotated image to the labelled_pitch_image topic
             annotated_msg_raw = self.bridge.cv2_to_imgmsg(cv_image_raw, encoding='bgr8')
             self.labelled_image_pub_raw.publish(annotated_msg_raw)
             annotated_msg_rgb = self.bridge.cv2_to_imgmsg(cv_image_rgb, encoding='bgr8')
             self.labelled_image_pub_rgb.publish(annotated_msg_rgb)
+
+            # Publish SpectrogramClassification
+            spectrogram_classification = SpectrogramClassification()
+            spectrogram_classification.spectrogram = msg
+            spectrogram_classification.classifications = detection_array
+            self.detected_labels_pub.publish(spectrogram_classification)
 
         except Exception as e:
             self.get_logger().error(f'Error processing image: {str(e)}')
