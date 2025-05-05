@@ -72,9 +72,25 @@ class ImageTemplateMatcher(Node):
             full_path = os.path.join(pkg, samples['share_directory_filepath']['subpath'])
         self.get_logger().info(f'Loading templates from {full_path}')
 
+        # Load in the default options for each field
+        d_bb = samples['default_details']['bounding_box_colour']
+        d_fr_min = samples['default_details']['frequency_search_range']['min']
+        d_fr_max = samples['default_details']['frequency_search_range']['max']
+        d_se = samples['default_details']['sensitivity']
+
         # Identify images
         for group in samples['details']:
-            directory = os.path.join(full_path, group['sub_directory'])
+
+            # Identify properties
+            action = group['action']
+            bounding_box_colour = group['bounding_box_colour'] if 'bounding_box_colour' in group else d_bb
+            frequency_search_range_min = group['frequency_search_range']['min'] if 'frequency_search_range' in group else d_fr_min
+            frequency_search_range_max = group['frequency_search_range']['max'] if 'frequency_search_range' in group else d_fr_max
+            sensitivity = group['sensitivity'] if 'sensitivity' in group else d_se
+            sub_directory = group['sub_directory'] if 'sub_directory' in group else f'{action}/'
+
+            # Loop through directory and save details
+            directory = os.path.join(full_path, sub_directory)
             for file in os.listdir(directory):
                 filename = os.fsdecode(file)
                 if filename.endswith(".png"):
@@ -82,12 +98,14 @@ class ImageTemplateMatcher(Node):
                     # Add file to detection
                     template_image = cv2.imread(os.path.join(directory, filename), cv2.IMREAD_GRAYSCALE)
                     templates.append({
-                        'sub_directory': group['sub_directory'],
+                        'action': action,
+                        'bounding_box_colour': bounding_box_colour,
+                        'frequency_search_range_min': frequency_search_range_min,
+                        'frequency_search_range_max': frequency_search_range_max,
+                        'sensitivity': sensitivity,
+                        'sub_directory': sub_directory,
                         'file': filename,
-                        'image': template_image,
-                        'sensitivity': group['sensitivity'],
-                        'bounding_box_colour': group['bounding_box_colour'],
-                        'action': group['action']
+                        'image': template_image
                     })
                     self.get_logger().info(f'Loaded template {filename} with action "{group["action"]}"')
         return templates
@@ -130,20 +148,55 @@ class ImageTemplateMatcher(Node):
             # Convert to grayscale for matching
             # gray_image = cv2.medianBlur(gray_image, 5)
 
-            best_from_all = {'bv': 0, 'best_scale':None, 'best_val':None, 'txt':None, 'text_position':None, 'best_loc':None, 'w':None, 'h':None, 'templ':None, 'bounding_box_colour':None}
+            best_from_all = {'bv': 0, 'best_scale':None, 'best_val':None,
+                             'txt':None, 'text_position':None, 'best_loc':None,
+                             'w':None, 'h':None, 'templ':None, 'bounding_box_colour':None}
 
             # For each template, perform multi-scale matching and draw bounding boxes if matched
             for tmpl in self.templates:
-                template = tmpl['image']
-                sensitivity = tmpl['sensitivity']
-                bounding_box_colour = tmpl['bounding_box_colour']
                 action = tmpl['action']
+                bounding_box_colour = tmpl['bounding_box_colour']
+                frequency_range_min = tmpl['frequency_search_range_min']
+                frequency_range_max = tmpl['frequency_search_range_max']
+                sensitivity = tmpl['sensitivity']
+                template = tmpl['image']
 
+                # Identidfy rows that cover range
+                nyquist = self.sample_rate / 2.0
+                img_h = cv_image_raw.shape[0]
+
+                def freq_to_row(f_hz):
+                    """0 Hz is at the *bottom* of the image; flip if yours is top-origin."""
+                    return int(round((1.0 - f_hz / nyquist) * (img_h - 1)))
+                row_top    = min(freq_to_row(freq_max), freq_to_row(freq_min))
+                row_bottom = max(freq_to_row(freq_max), freq_to_row(freq_min))
+                roi = cv_image_raw[row_top:row_bottom + 1, :]
+
+                # Loop through each size to try for detection
                 best_val = -np.inf
                 best_scale = None
                 best_loc = None
                 best_resized_template = None
+                for sx in np.linspace(0.15, 1.0, 10):
+                    for sy in np.linspace(0.15, 1.0, 10):
 
+                        tpl = cv2.resize(template, None, fx=sx, fy=sy, interpolation=cv2.INTER_AREA)
+                        if tpl.shape[0] > roi.shape[0] or tpl.shape[1] > roi.shape[1]:
+                            continue
+
+                        _, max_val, _, max_loc = cv2.minMaxLoc(cv2.matchTemplate(roi, tpl, cv2.TM_CCOEFF_NORMED))
+                        total_attempts += 1
+
+                        if max_val > best_val:
+                            best_val, best_loc_roi, best_tpl = max_val, max_loc, tpl
+                            best_sx, best_sy = sx, sy
+
+                # translate hit back to full-image coordinates
+                best_loc_global = (best_loc_roi[0], best_loc_roi[1] + row_top)
+
+
+
+                """
                 # Try matching over a range of scales (e.g., 0.5 to 1.5 times the template size)
                 for scale_x in np.linspace(0.15, 1.0, 10):
                     for scale_y in np.linspace(0.15, 1.0, 10):
@@ -160,6 +213,7 @@ class ImageTemplateMatcher(Node):
                             best_scale_x = scale_x
                             best_scale_y = scale_y
                             best_resized_template = resized_template
+                """
 
                 # If the best match exceeds the sensitivity threshold, draw the bounding box and log the action
                 if best_val >= sensitivity:

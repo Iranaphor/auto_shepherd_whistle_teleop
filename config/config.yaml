@@ -1,43 +1,68 @@
-audio_input:
+#########################
+audio_input_file:
     input_stream:
         sample_rate: 44100
         chunk_size: 1024
-        window_duration: 10
+        #window_duration: 10
     topics:
         input:
             filepath: 'input/filepath'
         output:
-            audio: 'input/audio'
+            audio: 'input/audio'        #auto_shepherd_msgs/AudioChunk
 
 #########################
-audio_filter:
+audio_input_mic:
     input_stream:
-        sample_rate: 44100
-        chunk_size: 1024
-        window_duration: 10
-        threshold_db: -10
-        secondary_threshold_db: -5
-        animation_interval: 50
-        show_display: False
+        sample_delay: 50 #ms #TODO
+        sample_rate: 44100 #2x the max Hz detected
+        chunk_size: 1024 #total Hz bins in capture
+#    topics:
+#        output:
+#            audio: 'input/audio'        #auto_shepherd_msgs/AudioChunk
+
+#########################
+audio_preprocessor:
+    spectrogram:
+        window_duration: 10 #total time to batch into image
     preprocessing:
-        medfilt_kernel: 3
-        normalize_min: -10
-        normalize_max: 55
-        frequency_min: 500
-        frequency_max: 5000
+        threshold_db: 0
+        medfilt:
+          do: False
+          kernel: 3
+        normalize:
+          do: True
+          min: -10
+          max: 55
+        frequency_crop:
+          do: False
+          min: 50
+          max: 5000
+        secondary_threshold_db: 0
+    topics:
+        input:
+            audio: 'input/audio'        #auto_shepherd_msgs/AudioChunk
+        output:
+            raw: 'preprocessed/raw'     #auto_shepherd_msgs/Spectrogram
+        visual:
+            st_raw: 'stream/raw_img'       #sensor_msgs/Image
+            st_rgb: 'stream/rgb_img'       #sensor_msgs/Image
+            pr_raw: 'preprocessed/raw_img' #sensor_msgs/Image
+            pr_rgb: 'preprocessed/rgb_img' #sensor_msgs/Image
+
+
+#########################
+codex_detector:
     activity_detection:
         run: False
         record_duration: 1.5
     topics:
         input:
-            raw: 'stream/raw'
-            rgb: 'stream/rgb'
-        detector:
-            raw: 'detected/raw'
-            rgb: 'detected/rgb'
+            raw: 'preprocessed/raw'
+        output:
             codex: 'detected/pitch_track'
-
-
+        visual:
+            raw: 'detected/raw_img'
+            rgb: 'detected/rgb_img'
 
 
 #########################
@@ -59,104 +84,74 @@ template_creator:
 template_matching:
     topics:
         input:
-            raw: 'stream/raw'
+            raw: 'preprocessed/raw'
             delay: 3
         output:
             raw: 'labelled/raw'
             rgb: 'labelled/rgb'
+            class: 'labelled/classfied_spectrogram'
     samples:
         absolute_dir: ''
         share_directory_filepath:
             package: 'auto_shepherd_whistle_teleop'
             subpath: 'templates/'
+        default_details:
+            bounding_box_colour: [255,0,0]
+            sensitivity: 0.1
+            frequency_search_range:
+              min: 50
+              max: 5000
+            sub_directory: '{action}/'
         details:
 #          - action: 'stop'
 #            bounding_box_colour: [0,0,255]
-#            sensitivity: 0.5
 #            sub_directory: 'wolf_whistle/'
+
 #          - action: 'forward'
 #            bounding_box_colour: [0,255,255]
-#            sensitivity: 0.5
 #            sub_directory: 'good_bad_ugly/'
+
 #          - action: 'backward'
 #            bounding_box_colour: [0,255,0]
-#            sensitivity: 0.5
 #            sub_directory: 'hill_slope/'
+
 #          - action: 'right'
 #            bounding_box_colour: [255,0,255]
-#            sensitivity: 0.5
 #            sub_directory: 'woody/'
+
 #          - action: 'left'
-#            bounding_box_colour: [255,255,0]
-#            sensitivity: 0.5
 #            sub_directory: '4_wide_invert_siren/'
 
-
-#          - action: '4_wide_invert_siren'
-#            bounding_box_colour: [255,0,0]
-#            sensitivity: 0.5
-#            sub_directory: '4_wide_invert_siren/'
 #          - action: 'andy_griffith'
-#            bounding_box_colour: [255,0,0]
-#            sensitivity: 0.5
-#            sub_directory: 'andy_griffith/'
 #          - action: 'charge'
-#            bounding_box_colour: [255,0,0]
-#            sensitivity: 0.5
-#            sub_directory: 'charge/'
 #          - action: 'double_hill_slope'
-#            bounding_box_colour: [255,0,0]
-#            sensitivity: 0.5
-#            sub_directory: 'double_hill_slope/'
           - action: 'good_bad_ugly'
-            bounding_box_colour: [255,0,0]
-            sensitivity: 0.5
-            sub_directory: 'good_bad_ugly/'
 #          - action: 'hill_slope'
-#            bounding_box_colour: [255,0,0]
-#            sensitivity: 0.5
-#            sub_directory: 'hill_slope/'
-          - action: 'jigglypuff'
-            bounding_box_colour: [255,0,0]
-            sensitivity: 0.5
-            sub_directory: 'jigglypuff/'
+#          - action: 'jigglypuff'
 #          - action: 'mario'
-#            bounding_box_colour: [255,0,0]
-#            sensitivity: 0.5
-#            sub_directory: 'mario/'
 #          - action: 'N'
-#            bounding_box_colour: [255,0,0]
-#            sensitivity: 0.5
-#            sub_directory: 'N/'
 #          - action: 'shave_and_a_haircut'
-#            bounding_box_colour: [255,0,0]
-#            sensitivity: 0.5
-#            sub_directory: 'shave_and_a_haircut/'
-          - action: 'the_river_kwai_march'
-            bounding_box_colour: [255,0,0]
-            sensitivity: 0.5
-            sub_directory: 'the_river_kwai_march/'
+#          - action: 'the_river_kwai_march'
 #          - action: 'twisted_nerve'
-#            bounding_box_colour: [255,0,0]
-#            sensitivity: 0.5
-#            sub_directory: 'twisted_nerve/'
 #          - action: 'wii_fit_obese'
-#            bounding_box_colour: [255,0,0]
-#            sensitivity: 0.5
-#            sub_directory: 'wii_fit_obese/'
 #          - action: 'wolf_whistle'
-#            bounding_box_colour: [255,0,0]
-#            sensitivity: 0.5
-#            sub_directory: 'wolf_whistle/'
 #          - action: 'woody'
-#            bounding_box_colour: [255,0,0]
-#            sensitivity: 0.5
-#            sub_directory: 'woody/'
 #          - action: 'zelda_item'
-#            bounding_box_colour: [255,0,0]
-#            sensitivity: 0.5
-#            sub_directory: 'zelda_item/'
-          - action: 'zelda_main_theme'
-            bounding_box_colour: [255,0,0]
-            sensitivity: 0.5
-            sub_directory: 'zelda_main_theme/'
+#          - action: 'zelda_main_theme'
+
+
+#########################
+
+mp3_writer:
+    input_stream:
+        sample_rate: 44100
+        chunk_size: 1024
+        window_duration: 10
+    topics:
+        input:
+            class: 'labelled/classfied_spectrogram'
+    samples:
+        absolute_dir: ''
+        src_directory_filepath:
+            package: 'auto_shepherd_whistle_teleop'
+            subpath: 'classified/'
