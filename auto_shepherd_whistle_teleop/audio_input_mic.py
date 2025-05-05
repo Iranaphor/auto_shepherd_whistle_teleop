@@ -52,13 +52,12 @@ class MicrophoneInput(Node):
         self.sample_rate     = int(s['sample_rate'])
         self.chunk_size      = int(s['chunk_size'])
         self.channels        = 1
-        self.window_chunks   = int(self.window_duration * self.sample_rate / self.chunk_size)
 
         # Configure publisher
         self.pub = self.create_publisher(AudioChunk, t['output']['audio'], 10)
 
         # Configure audio capture
-        self.stream_thread = threading.Thread(target=self._run_stream, daemon=True)
+        self.stream_thread = threading.Thread(target=self.run_stream, daemon=True)
         self.stream_thread.start()
 
         self.get_logger().info(f'MicrophoneInput ready (rate={self.sample_rate} Hz, chunk={self.chunk_size} frames)')

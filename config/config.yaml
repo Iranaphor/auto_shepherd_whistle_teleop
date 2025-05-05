@@ -16,16 +16,16 @@ audio_input_mic:
         sample_delay: 50 #ms #TODO
         sample_rate: 44100 #2x the max Hz detected
         chunk_size: 1024 #total Hz bins in capture
-#    topics:
-#        output:
-#            audio: 'input/audio'        #auto_shepherd_msgs/AudioChunk
+    topics:
+        output:
+            audio: 'input/audio'        #auto_shepherd_msgs/AudioChunk
 
 #########################
 audio_preprocessor:
     spectrogram:
         window_duration: 10 #total time to batch into image
     preprocessing:
-        threshold_db: 0
+        threshold_db: 0 #-10
         medfilt:
           do: False
           kernel: 3
@@ -37,7 +37,7 @@ audio_preprocessor:
           do: False
           min: 50
           max: 5000
-        secondary_threshold_db: 0
+        secondary_threshold_db: 0 #-5
     topics:
         input:
             audio: 'input/audio'        #auto_shepherd_msgs/AudioChunk
@@ -82,11 +82,24 @@ template_creator:
 
 #########################
 template_matching:
+#    topics:
+#        input:
+#            audio: 'input/audio'        #auto_shepherd_msgs/AudioChunk
+#        output:
+#            raw: 'preprocessed/raw'     #auto_shepherd_msgs/Spectrogram
+#        visual:
+#            st_raw: 'stream/raw_img'       #sensor_msgs/Image
+#            st_rgb: 'stream/rgb_img'       #sensor_msgs/Image
+#            pr_raw: 'preprocessed/raw_img' #sensor_msgs/Image
+#            pr_rgb: 'preprocessed/rgb_img' #sensor_msgs/Image
     topics:
         input:
-            raw: 'preprocessed/raw'
+            raw: 'preprocessed/raw'      #auto_shepherd_msgs/Spectrogram
             delay: 3
         output:
+            raw: 'labelled/'
+
+        visual:
             raw: 'labelled/raw'
             rgb: 'labelled/rgb'
             class: 'labelled/classfied_spectrogram'
