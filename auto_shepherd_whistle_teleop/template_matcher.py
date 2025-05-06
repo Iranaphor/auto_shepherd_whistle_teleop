@@ -120,13 +120,13 @@ class ImageTemplateMatcher(Node):
         #print(msg.header.stamp.sec)
 
         if self.last_message_secs == 0:
-            print('first')
+            #print('first')
             pass
-        elif msg.header.stamp.sec - self.input_delay > self.last_message_secs:
-            print('go')
+        elif msg.raw_spectrogram.header.stamp.sec - self.input_delay > self.last_message_secs:
+            #print('go')
             pass
         else:
-            print('skip')
+            #print('skip')
             return
         self.last_message_secs = msg.raw_spectrogram.header.stamp.sec
 
@@ -180,7 +180,22 @@ class ImageTemplateMatcher(Node):
                         if tpl.shape[0] > roi.shape[0] or tpl.shape[1] > roi.shape[1]:
                             continue
 
-                        _, max_val, _, max_loc = cv2.minMaxLoc(cv2.matchTemplate(roi, tpl, cv2.TM_CCOEFF_NORMED))
+                        # --- make sure depth & channels match ---------------------------------
+                        if roi.ndim == 3:                       # ROI came in RGB – drop colour
+                            roi_gray = cv2.cvtColor(roi, cv2.COLOR_BGR2GRAY)
+                        else:
+                            roi_gray = roi
+
+                        if tpl.ndim == 3:                       # template still RGB – drop colour
+                            tpl_gray = cv2.cvtColor(tpl, cv2.COLOR_BGR2GRAY)
+                        else:
+                            tpl_gray = tpl
+
+                        roi_f = roi_gray.astype(np.float32)     # CV_32F depth for both images
+                        tpl_f = tpl_gray.astype(np.float32)
+                        # ----------------------------------------------------------------------
+
+                        _, max_val, _, max_loc = cv2.minMaxLoc(cv2.matchTemplate(roi_f, tpl_f, cv2.TM_CCOEFF_NORMED))
                         total_attempts += 1
 
                         if max_val > best_val:
@@ -284,6 +299,7 @@ class ImageTemplateMatcher(Node):
             self.labelled_image_pub_raw.publish(annotated_msg_raw)
             annotated_msg_rgb = self.bridge.cv2_to_imgmsg(cv_image_rgb, encoding='bgr8')
             self.labelled_image_pub_rgb.publish(annotated_msg_rgb)
+            print('published images')
 
             # Publish SpectrogramClassification
             spectrogram_classification = SpectrogramClassification()
