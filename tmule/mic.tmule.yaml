@@ -1,0 +1,36 @@
+---
+session: auto_shepherd_whistle_teleop
+init_cmd: |
+  #exec /bin/bash
+  cd @TMULE_CONFIG_DIR@ || true
+  set -o pipefail
+
+  # Source system configuration
+  source ~/.bashrc
+  export DISPLAY=:0
+
+  # Define Config and RViz files
+  PKG=$(ros2 pkg prefix auto_shepherd_whistle_teleop)
+  CONF=$PKG/share/auto_shepherd_whistle_teleop/config
+  export RVIZ_CONFIG=$CONF/image_viewer.rviz
+  export WHISTLE_CONF=$CONF/config.yaml
+
+  # Source the environment variables for the scenario
+  clear -x
+
+windows:
+
+- name: input
+  panes:
+  - ros2 run auto_shepherd_whistle_teleop audio_input_mic.py
+
+- name: processing
+  panes:
+  - ros2 run auto_shepherd_whistle_teleop audio_preprocessor.py
+  - ros2 run image_view image_view --ros-args --remap image:=/stream/rgb
+
+- name: detection
+  panes:
+  - ros2 run auto_shepherd_whistle_teleop template_matcher.py
+  - ros2 run image_view image_view --ros-args --remap image:=/detected/rgb
+  - clear

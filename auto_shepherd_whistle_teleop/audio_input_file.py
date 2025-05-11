@@ -1,20 +1,26 @@
 #!/usr/bin/env python3
 #
-# audio_input.py  –  publish any audio file as a live-stream
+# audio_input.py  –  publish any audio/video file as a live-stream
 #
 #   subscribes:  ~/filepath    (std_msgs/String, absolute path)
-#   publishes :  /input/audio  (whistle_interfaces/AudioChunk)
+#   publishes :  ~/audio       (auto_shepherd_msgs/AudioChunk)
+#
+# Supported formats: wav, mp3, m4a, mp4 (via FFmpeg), plus anything FFmpeg knows.
 
 import os
 import time
 import threading
 import yaml
 import numpy as np
+
+import librosa                           # pip install librosa  (needs ffmpeg)
 import soundfile as sf                   # pip install soundfile
+
 import rclpy
 from rclpy.node import Node
 from std_msgs.msg import String
-from auto_shepherd_msgs.msg import AudioChunk   # generated interface
+
+from auto_shepherd_msgs.msg import AudioChunk
 
 
 class AudioInput(Node):
@@ -33,10 +39,10 @@ class AudioInput(Node):
         with open(self.config_file, 'r') as f:
             cfg = yaml.safe_load(f)
 
-        a = cfg['audio_input']
+        a = cfg['audio_input_file']
         self.sample_rate     = int(a['input_stream']['sample_rate'])
         self.chunk_size      = int(a['input_stream']['chunk_size'])
-        self.window_duration = float(a['input_stream']['window_duration'])
+        self.window_duration = float(a['input_stream']['flush_duration'])
         self.window_chunks   = int(self.window_duration * self.sample_rate / self.chunk_size)
 
         # --------------------------------------------------
@@ -62,7 +68,7 @@ class AudioInput(Node):
     #                 CALLBACKS / HELPERS
     # ======================================================
     def _filepath_cb(self, msg: String):
-        """Spin up a new thread that publishes the file."""
+        """Spawn a worker thread that publishes the requested file."""
         path = os.path.expanduser(msg.data.strip())
 
         if not os.path.isfile(path):
@@ -77,19 +83,47 @@ class AudioInput(Node):
             target=self._stream_file, args=(path,), daemon=True)
         self._playback_thread.start()
 
+    # ------------------------------------------------------------------
+    #                        Audio decoding
+    # ------------------------------------------------------------------
+    def _load_any(self, path: str) -> tuple[np.ndarray, int]:
+        """
+        Decode *any* audio/video file into a float32 numpy array.
 
-    # ──────────────────────────────────────────────────────────────────────────
-    # Core: publish file, pad last chunk, then flush one full window of silence
-    # ──────────────────────────────────────────────────────────────────────────
-    def _stream_file(self, wav_path: str):
-        self.get_logger().info(f'Streaming {wav_path}')
-        data, sr = sf.read(wav_path, dtype='float32', always_2d=True)
+        Returns
+        -------
+        data : shape (frames, channels) float32
+        sr   : sample-rate of the file
+        """
+        ext = os.path.splitext(path)[1].lower()
+        if ext == '.wav':
+            # soundfile gives (frames, channels) already
+            data, sr = sf.read(path, dtype='float32', always_2d=True)
+        else:
+            # librosa/audioread + FFmpeg: (channels, frames) → T to match above
+            data, sr = librosa.load(path, sr=None, mono=False)
+            if data.ndim == 1:            # handle mono
+                data = data[np.newaxis, :]
+            data = data.T.astype(np.float32)
+        return data, sr
 
-        # Resample if the file sr ≠ pipeline sr
+    # ──────────────────────────────────────────────────────────────────
+    #                  Core: publish file then flush silence
+    # ──────────────────────────────────────────────────────────────────
+    def _stream_file(self, path: str):
+        self.get_logger().info(f'Streaming {path}\n\n')
+
+        data, sr = self._load_any(path)
+
+        # Resample if input SR differs from pipeline SR
+        print('librosa soon\n\n')
         if sr != self.sample_rate:
-            import librosa
-            data = librosa.resample(data.T, sr, self.sample_rate).T
-            sr   = self.sample_rate
+            data = librosa.resample(data,                 # no transpose
+                orig_sr=sr,
+                target_sr=self.sample_rate,
+                axis=0)               # time axis
+            sr = self.sample_rate
+        print('librosa started\n\n')
 
         channels   = data.shape[1]
         total_len  = data.shape[0]
@@ -102,13 +136,10 @@ class AudioInput(Node):
             msg.sample_rate  = self.sample_rate
             msg.frames       = self.chunk_size
             msg.channels     = channels
-            if empty:
-                msg.data = []
-            else:
-                msg.data         = chunk.flatten().tolist()
+            msg.data         = [] if empty else chunk.flatten().tolist()
             self.pub.publish(msg)
 
-        # ── Main streaming loop ────────────────────────────────────────────
+        # ── Main streaming loop ────────────────────────────────────────
         while rclpy.ok() and idx < total_len:
             chunk = data[idx: idx + self.chunk_size]
             if chunk.shape[0] < self.chunk_size:
@@ -116,21 +147,21 @@ class AudioInput(Node):
                                 channels), dtype=np.float32)
                 chunk = np.vstack([chunk, pad])
             publish_chunk(chunk)
+            print('published chunk')
             time.sleep(self.chunk_size / self.sample_rate)
             idx += self.chunk_size
 
-        # ── Flush silence: one complete sliding-window duration ───────────
+        # ── Flush silence: one complete sliding-window duration ────────
         zero_chunk = np.zeros((self.chunk_size, channels), dtype=np.float32)
         for _ in range(self.window_chunks):
             if not rclpy.ok():
                 break
             publish_chunk(zero_chunk)
             time.sleep(self.chunk_size / self.sample_rate)
-        # ─────────────────────────────────────────────────────────────────────
 
         self.get_logger().info('Finished streaming (silence flushed)')
 
-        # Empty message to declare completion
+        # Empty message to signal completion
         publish_chunk([], empty=True)
         self.get_logger().info('Finished streaming')
 
@@ -147,3 +178,4 @@ def main():
 
 if __name__ == '__main__':
     main()
+

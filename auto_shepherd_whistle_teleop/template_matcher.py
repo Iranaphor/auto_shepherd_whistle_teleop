@@ -147,7 +147,7 @@ class ImageTemplateMatcher(Node):
             best_from_all = {'bv': 0, 'best_scale':None, 'best_val':None,
                              'txt':None, 'text_position':None, 'best_loc':None,
                              'w':None, 'h':None, 'templ':None, 'bounding_box_colour':None}
-            print('loop templates now')
+            print('begin | template scanning')
             # For each template, perform multi-scale matching and draw bounding boxes if matched
             for tmpl in self.templates:
                 action = tmpl['action']
@@ -233,7 +233,6 @@ class ImageTemplateMatcher(Node):
                         detection_2d.results.hypothesis.score = bv
                         detection_array.append(detection_2d)
 
-
                     # Identify best detection from set to save
                     if best_val > best_from_all['bv']:
                          best_from_all = {'bv':best_val, 'best_scale':bs, 'best_val':bv,
@@ -296,20 +295,28 @@ class ImageTemplateMatcher(Node):
 
             # Publish the annotated image to the labelled_pitch_image topic
             annotated_msg_raw = self.bridge.cv2_to_imgmsg(cv_image_raw, encoding='bgr8')
+            annotated_msg_raw.header = msg.raw_spectrogram.header
             self.labelled_image_pub_raw.publish(annotated_msg_raw)
             annotated_msg_rgb = self.bridge.cv2_to_imgmsg(cv_image_rgb, encoding='bgr8')
+            annotated_msg_rgb.header = msg.raw_spectrogram.header
             self.labelled_image_pub_rgb.publish(annotated_msg_rgb)
-            print('published images')
+            print('published | images')
+
+            # Save image to file (debug)
+            save_path = os.path.join(os.path.expanduser("~"), "Desktop", 'whistles', "detected", "bounds_rgb.png")
+            cv2.imwrite(save_path, cv_image_rgb)
 
             # Publish SpectrogramClassification
             spectrogram_classification = SpectrogramClassification()
             spectrogram_classification.spectrogram = msg
             spectrogram_classification.classifications = detection_array
             self.detected_labels_pub.publish(spectrogram_classification)
+            print('published | classifications')
 
         except Exception as e:
             self.get_logger().error(f'Error processing image: {str(e)}')
             raise e
+
         print(f"--- {(time.time() - start_time):.4f}s for {total_attempts} total attempts ---")
 
 def main(args=None):

@@ -3,7 +3,7 @@ audio_input_file:
     input_stream:
         sample_rate: 44100
         chunk_size: 1024
-        #window_duration: 10
+        flush_duration: 10 # for flushing after file completes
     topics:
         input:
             filepath: 'input/filepath'
@@ -27,14 +27,14 @@ audio_preprocessor:
     preprocessing:
         threshold_db: 0 #-10
         medfilt:
-          do: False
+          do: True
           kernel: 3
         normalize:
           do: True
           min: -10
           max: 55
         frequency_crop:
-          do: False
+          do: True
           min: 50
           max: 5000
         secondary_threshold_db: 0 #-5
@@ -92,7 +92,7 @@ template_matching:
             rgb: 'detected/rgb_bounds'  #sensor_msgs/Image
     options:
         input_delay: 3
-        draw_style: 'all' #best, group_best, all
+        draw_style: 'best' #best, group_best, all
     samples:
         absolute_dir: ''
         share_directory_filepath:
@@ -100,10 +100,10 @@ template_matching:
             subpath: 'templates/'
         default_details:
             bounding_box_colour: [255,0,0]
-            sensitivity: 0.1
+            sensitivity: 0.05
             frequency_search_range:
-              min: 50
-              max: 5000
+              min: 1
+              max: 20000
             sub_directory: '{action}/'
         details:
 #          - action: 'stop'

@@ -1,0 +1,49 @@
+---
+session: auto_shepherd_whistle_teleop
+init_cmd: |
+  #exec /bin/bash
+  cd @TMULE_CONFIG_DIR@ || true
+  set -o pipefail
+
+  # Source system configuration
+  source ~/.bashrc
+  export DISPLAY=:0
+
+  # Define Config and RViz files
+  PKG=$(ros2 pkg prefix auto_shepherd_whistle_teleop)
+  CONF=$PKG/share/auto_shepherd_whistle_teleop/config
+  export RVIZ_CONFIG=$CONF/image_viewer.rviz
+  export WHISTLE_CONF=$CONF/config.yaml
+
+  w_human=$HOME/Desktop/whistles/mixkit-human-long-whistle-613.wav
+  w_gbu=$HOME/Desktop/whistles/goodbadugly.mp3
+  w_gbu1=$HOME/Desktop/whistles/Gbu1.mp3
+  w_gbu2=$HOME/Desktop/whistles/Gbu2.mp3
+  w_gbu3=$HOME/Desktop/whistles/Gbu3.mp3
+  w_flute=$HOME/Desktop/whistles/Flute.mp3
+  export WHISTLE_FILE=$w_gbu1
+
+  # Source the environment variables for the scenario
+  clear -x
+
+windows:
+
+- name: visual
+  panes:
+  - rviz2 -d $RVIZ_CONFIG
+  - "os2 run image_view image_view --ros-args --remap image:=/preprocessed/rgb_img"
+  - "os2 run image_view image_view --ros-args --remap image:=/detected/rgb_bounds"
+
+- name: input
+  panes:
+  - ros2 run auto_shepherd_whistle_teleop audio_input_file.py
+  - "ros2 topic pub /input/filepath std_msgs/msg/String \"data: '$WHISTLE_FILE'\" --once"
+
+- name: processing
+  panes:
+  - ros2 run auto_shepherd_whistle_teleop audio_preprocessor.py
+
+- name: detection
+  panes:
+  - ros2 run auto_shepherd_whistle_teleop template_matcher.py
+  - clear
