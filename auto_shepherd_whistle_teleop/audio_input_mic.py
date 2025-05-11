@@ -60,6 +60,15 @@ class MicrophoneInput(Node):
         self.stream_thread = threading.Thread(target=self.run_stream, daemon=True)
         self.stream_thread.start()
 
+        # ── New: band-edge metadata (constant for this mic) ───────────────
+        # If the mic or driver already applies a known band-pass filter,
+        # replace 0 / Nyquist with that narrower range.
+        self.frequency_min       = 0                    # Hz
+        self.frequency_max       = self.sample_rate // 2  # Nyquist
+        # For raw audio we keep the “row-0 is LOW frequency” convention
+        # used elsewhere in the pipeline:
+        self.frequency_row0_high = False
+
         self.get_logger().info(f'MicrophoneInput ready (rate={self.sample_rate} Hz, chunk={self.chunk_size} frames)')
 
 
@@ -89,6 +98,10 @@ class MicrophoneInput(Node):
             msg.data = []
         else:
             msg.data = chunk.flatten().tolist()
+        msg.frequency_min       = self.frequency_min
+        msg.frequency_max       = self.frequency_max
+        msg.frequency_row0_high = self.frequency_row0_high # False → low→high
+
         self.pub.publish(msg)
 
 

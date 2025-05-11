@@ -125,6 +125,9 @@ class AudioInput(Node):
             sr = self.sample_rate
         print('librosa started\n\n')
 
+        frequency_min = 0            # PCM files start at DC
+        frequency_max = sr // 2      # Nyquist = half the SR
+        frequency_row0_high = False  # row-0 will be the LOWEST freq
         channels   = data.shape[1]
         total_len  = data.shape[0]
         idx        = 0
@@ -137,6 +140,9 @@ class AudioInput(Node):
             msg.frames       = self.chunk_size
             msg.channels     = channels
             msg.data         = [] if empty else chunk.flatten().tolist()
+            msg.frequency_min       = frequency_min
+            msg.frequency_max       = frequency_max
+            msg.frequency_row0_high = frequency_row0_high
             self.pub.publish(msg)
 
         # ── Main streaming loop ────────────────────────────────────────

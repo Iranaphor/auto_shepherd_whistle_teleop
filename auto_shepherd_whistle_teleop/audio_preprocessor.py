@@ -142,57 +142,74 @@ class RealTimeSpectrogram(Node):
     #                 CALLBACKS / HELPERS
     # ======================================================
     def audio_input_cb(self, msg):
-        #print(len(msg.data), msg.frames, msg.channels, msg.sample_rate)
-        if not msg.data:          # ignore “flush-empty” message
+
+        # Ignore “flush-empty” message
+        if not msg.data:
             return
 
         # Initialise buffers on first packet
         if not self.initialised:
-            self._init_from_msg(msg)
+            self.init_from_msg(msg)
 
-        # Called as callback from audio_input.py / audio_input_mic.py
+        # Format data for processing
         indata = np.asarray(msg.data, dtype=np.float32)\
                     .reshape((msg.frames, msg.channels))
-        frames = msg.frames
-        # fabricate minimal time_info / status as before
+
+        # Fabricate time_info
         time_info = {'input_buffer_adc_time': msg.header.stamp.sec +
-                                             msg.header.stamp.nanosec * 1e-9}
-        status = "from_file"
+                                              msg.header.stamp.nanosec * 1e-9}
 
-        self.audio_callback(indata, frames, time_info, status)
+        self.audio_callback(indata, msg.frames, time_info, "from_file")
 
-    def _init_from_msg(self, msg):
-        # Audio and display parameters
-        s_conf = self.config['audio_preprocessor']['spectrogram']
 
-        # Save input stream properties
-        self.sample_rate = msg.sample_rate
-        self.chunk_size = msg.frames
-        self.window_duration = s_conf['window_duration']
-        self.num_chunks = int(self.window_duration *
-                              self.sample_rate / self.chunk_size)
+    def init_from_msg(self, msg):
+        """Prepare buffers and masks the first time a Spectrogram message arrives."""
 
-        # Compute full FFT frequency bins and create frequency mask
-        full_freqs = np.fft.rfftfreq(self.chunk_size, d=1/self.sample_rate)
+        # ───── 1. Audio & display parameters ────────────────────────────────────
+        s_conf           = self.config['audio_preprocessor']['spectrogram']
+        self.sample_rate = msg.sample_rate              # Hz
+        self.chunk_size  = msg.frames                   # samples per column
+        self.window_duration = s_conf['window_duration']# seconds
+        self.num_chunks  = int(self.window_duration * self.sample_rate
+                               / self.chunk_size)       # rows in the scroll-back buffer
+
+        # ───── 2. Build full FFT bin-centre array (one call, cheap) ────────────
+        full_freqs = np.fft.rfftfreq(self.chunk_size, d=1.0 / self.sample_rate)
+
+        # Band announced by the publisher (usually 0 … Nyquist)
+        f_min_msg = float(msg.frequency_min)
+        f_max_msg = float(msg.frequency_max)
+
+        # Start with “keep everything”
+        freq_mask = np.ones_like(full_freqs, dtype=bool)
+
         if self.frequency_crop_do:
-            self.freq_mask = (full_freqs >= self.frequency_crop_min) \
-                             & (full_freqs <= self.frequency_crop_max)
-            self.trimmed_freqs = full_freqs[self.freq_mask]
-            self.frequency_min = self.frequency_crop_min
-            self.frequency_max = self.frequency_crop_max
-        else:
-            self.trimmed_freqs = full_freqs
-            self.frequency_min = self.trimmed_freqs[0]
-            self.frequency_max = self.trimmed_freqs[-1]
+            # ── 3. use *config* limits, but clamp to sender’s band ──
+            fmin = max(self.frequency_crop_min, f_min_msg)
+            fmax = min(self.frequency_crop_max, f_max_msg)
+            if fmin < fmax:                        # sanity check
+                self.get_logger().info(f'Cropping {fmin}–{fmax} Hz')
+                freq_mask = (full_freqs >= fmin) & (full_freqs <= fmax)
 
-        # Initialize spectrogram buffer (rows: time slices, columns: frequency bins)
-        self.spectrogram = np.zeros((self.num_chunks, len(self.trimmed_freqs)))
+        trimmed_freqs = full_freqs[freq_mask]
+
+        # ───── 4. Cache for later use ──────────────────────────────────────────
+        self.freq_mask      = freq_mask            # Boolean mask for incoming spectra
+        self.trimmed_freqs  = trimmed_freqs        # 1-D float array of kept frequencies
+        self.frequency_min  = trimmed_freqs[0]     # == f_min_msg if crop applied
+        self.frequency_max  = trimmed_freqs[-1]    # == f_max_msg if crop applied
+
+        # ───── 5. Allocate the rolling spectrogram buffer ─────────────────────
+        self.spectrogram = np.zeros((self.num_chunks, len(trimmed_freqs)))
 
         self.initialised = True
-        self.get_logger().info(f'Initialised spectrogram: '
-                               f'rate={self.sample_rate} Hz, '
-                               f'chunk={self.chunk_size} frames, '
-                               f'window={self.window_duration} s')
+        self.get_logger().info(
+            f'Initialised spectrogram: rate={self.sample_rate} Hz, '
+            f'chunk={self.chunk_size} frames, window={self.window_duration} s, '
+            f'freq {self.frequency_min:.1f}–{self.frequency_max:.1f} Hz '
+            f'({len(trimmed_freqs)} bins)'
+        )
+
 
     # ──────────────────────────────────────────────────────────────────────────
     # Core: process incoming chunk
@@ -208,6 +225,9 @@ class RealTimeSpectrogram(Node):
             fft_data_trimmed = fft_data[self.freq_mask]
         else:
             fft_data_trimmed = fft_data
+            #self.frequency_min = msg.frequency_min
+            #self.frequency_max = msg.frequency_max
+
         # Roll the spectrogram buffer and append the new data
         self.spectrogram[:-1, :] = self.spectrogram[1:, :]
         self.spectrogram[-1, :] = fft_data_trimmed
@@ -230,15 +250,26 @@ class RealTimeSpectrogram(Node):
 
     def publish_spectrogram(self, img, header, sample_rate, chunk_size):
         S = Spectrogram()
-        # Load Image
-        S.raw_spectrogram = self.bridge.cv2_to_imgmsg(img.astype(np.uint8), encoding="mono8")
+
+        # ── Image payload ───────────────────────────────────────────────
+        img_uint8 = (np.clip(img, 0.0, 1.0) * 255.0).astype(np.uint8)   # SCALE!
+        S.raw_spectrogram = self.bridge.cv2_to_imgmsg(img_uint8,        # FLOAT PATH:
+                                                      encoding="mono8") # → encode "32FC1"
         S.raw_spectrogram.header = header
-        # Load properties
-        S.window_duration = float(self.window_duration) #from config file
-        S.sample_rate     = sample_rate          #from audio source
-        S.chunk_size      = chunk_size           #from audio source
-        # Publish
+
+        # ── Time axis ──────────────────────────────────────────────────
+        S.window_duration = float(self.window_duration)
+        S.sample_rate     = sample_rate
+        S.chunk_size      = chunk_size
+
+        # ── Frequency axis (use cached limits) ─────────────────────────
+        S.frequency_max       = self.frequency_crop_max if self.frequency_crop_do else self.frequency_max
+        S.frequency_min       = self.frequency_crop_min if self.frequency_crop_do else self.frequency_min
+        S.frequency_row0_high = False
+
         self.spectrogram_pub.publish(S)
+
+
 
     # ──────────────────────────────────────────────────────────────────────────
     # Timer-driven update:  visualisation + event detection
