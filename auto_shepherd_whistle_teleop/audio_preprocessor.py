@@ -263,8 +263,8 @@ class RealTimeSpectrogram(Node):
         S.chunk_size      = chunk_size
 
         # ── Frequency axis (use cached limits) ─────────────────────────
-        S.frequency_max       = self.frequency_crop_max if self.frequency_crop_do else self.frequency_max
-        S.frequency_min       = self.frequency_crop_min if self.frequency_crop_do else self.frequency_min
+        S.frequency_max       = int(self.frequency_crop_max) if self.frequency_crop_do else int(self.frequency_max)
+        S.frequency_min       = int(self.frequency_crop_min) if self.frequency_crop_do else int(self.frequency_min)
         S.frequency_row0_high = False
 
         self.spectrogram_pub.publish(S)

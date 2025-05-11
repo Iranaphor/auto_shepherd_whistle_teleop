@@ -91,8 +91,8 @@ template_matching:
             raw: 'detected/raw_bounds'  #sensor_msgs/Image
             rgb: 'detected/rgb_bounds'  #sensor_msgs/Image
     options:
-        input_delay: 1
-        draw_style: 'all' #best, group_best, all
+        input_delay: 0.5         #time between scans
+        draw_style: 'best' #best, all
     samples:
         absolute_dir: ''
         share_directory_filepath:
@@ -100,7 +100,7 @@ template_matching:
             subpath: 'templates/'
         default_details:
             bounding_box_colour: [255,0,0]
-            sensitivity: 0.7
+            sensitivity: 0.5
             frequency_search_range:
               min: 50
               max: 5000
@@ -158,3 +158,5 @@ mp3_writer:
         src_directory_filepath:
             package: 'auto_shepherd_whistle_teleop'
             subpath: 'classified/'
+
+

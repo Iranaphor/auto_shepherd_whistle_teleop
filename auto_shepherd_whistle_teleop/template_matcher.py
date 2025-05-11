@@ -233,8 +233,8 @@ class ImageTemplateMatcher(Node):
                 if best_val >= sensitivity:
                     bs = f'{best_sx:.2f}x{best_sy:.2f}'
                     bv = f'{best_val:.2f}'
-                    self.get_logger().info(f'Match at scale {bs} (score: {bv} for action "{action}"')
-                    w, h = tpl.shape[::-1]
+                    self.get_logger().info(f'Match at scale {bs} (score: {bv} for action "{action}")')
+                    w, h = best_tpl.shape[::-1]
                     text_position = (best_loc_global[0], best_loc_global[1] - 10 if best_loc_global[1] - 10 > 10 else best_loc_global[1] + 10)
                     txt = f"{action} {round(best_val,2)}"
 
