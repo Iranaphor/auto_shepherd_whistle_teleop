@@ -46,4 +46,8 @@ windows:
 - name: detection
   panes:
   - ros2 run auto_shepherd_whistle_teleop template_matcher.py
+
+- name: decoding
+  panes:
+  - ros2 run auto_shepherd_whistle_teleop mp3_writer.py
   - clear
