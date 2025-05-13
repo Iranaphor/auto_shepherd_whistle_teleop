@@ -21,6 +21,7 @@ init_cmd: |
   w_gbu2=$HOME/Desktop/whistles/Gbu2.mp3
   w_gbu3=$HOME/Desktop/whistles/Gbu3.mp3
   w_flute=$HOME/Desktop/whistles/Flute.mp3
+  w_test=$HOME/Desktop/whistles/Test-distance-1.mp3
   export WHISTLE_FILE=$w_gbu1
 
   # Source the environment variables for the scenario
