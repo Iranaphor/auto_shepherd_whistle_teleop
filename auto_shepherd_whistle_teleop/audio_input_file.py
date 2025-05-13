@@ -76,7 +76,7 @@ class AudioInput(Node):
             return
 
         if self._playback_thread and self._playback_thread.is_alive():
-            self.get_logger().warn('Playback already running – ignored path')
+            #self.get_logger().warn('Playback already running – ignored path')
             return
 
         self._playback_thread = threading.Thread(
@@ -111,19 +111,17 @@ class AudioInput(Node):
     #                  Core: publish file then flush silence
     # ──────────────────────────────────────────────────────────────────
     def _stream_file(self, path: str):
-        self.get_logger().info(f'Streaming {path}\n\n')
+        self.get_logger().info(f'Streaming {path}')
 
         data, sr = self._load_any(path)
 
         # Resample if input SR differs from pipeline SR
-        print('librosa soon\n\n')
         if sr != self.sample_rate:
             data = librosa.resample(data,                 # no transpose
                 orig_sr=sr,
                 target_sr=self.sample_rate,
                 axis=0)               # time axis
             sr = self.sample_rate
-        print('librosa started\n\n')
 
         frequency_min = 0            # PCM files start at DC
         frequency_max = sr // 2      # Nyquist = half the SR
@@ -153,9 +151,12 @@ class AudioInput(Node):
                                 channels), dtype=np.float32)
                 chunk = np.vstack([chunk, pad])
             publish_chunk(chunk)
-            print('published chunk')
+            if idx%100 == 0:
+                progress=(idx/total_len)
+                print('published chunk, progress: |'+ '#'*int(30*(progress))+' '*int(30*(1-progress))+f'| {round(progress,2)}%')
             time.sleep(self.chunk_size / self.sample_rate)
             idx += self.chunk_size
+        print('published chunk, progress: |'+ '#'*int(30)+' '*int(0)+f'| {round(progress,2)}%')
 
         # ── Flush silence: one complete sliding-window duration ────────
         zero_chunk = np.zeros((self.chunk_size, channels), dtype=np.float32)
